@@ -1,0 +1,94 @@
+<div class="teacher-theme teacher-dashboard-page">
+  <section class="teacher-content portal-page">
+    <header class="portal-hero teacher-hero">
+      <div class="teacher-hero-copy">
+        <p class="portal-kicker">Teacher Portal</p>
+        <h1>{{ greeting() }}, {{ displayName() }}</h1>
+        <p class="portal-lede">
+          Manage classes quickly: create homework, mark attendance, and review class activities.
+        </p>
+      </div>
+      <div class="teacher-hero-meta" role="status">
+        <p class="teacher-hero-date">{{ todayLabel() }}</p>
+        <p class="teacher-hero-sub">Today’s snapshot</p>
+      </div>
+    </header>
+
+    <section class="portal-stats teacher-stats">
+      <article class="portal-stat">
+        <p>Homework today</p>
+        <strong>{{ loading ? '…' : todayHomeworkCount }}</strong>
+      </article>
+      <article class="portal-stat">
+        <p>Attendance entries today</p>
+        <strong>{{ loading ? '…' : todayAttendanceCount }}</strong>
+      </article>
+      <article class="portal-stat">
+        <p>Total notices</p>
+        <strong>{{ loading ? '…' : totalNotices }}</strong>
+      </article>
+    </section>
+
+    <section class="teacher-dashboard-grid">
+      <article class="portal-card portal-card-primary teacher-card-actions">
+        <h2>Quick actions</h2>
+        <p>Start daily tasks in one click.</p>
+        <div class="portal-actions">
+          <a routerLink="/teacher/homework/add" class="btn primary">Add homework</a>
+          <a routerLink="/teacher/attendance" class="btn">Mark attendance</a>
+          <a routerLink="/teacher/homework" class="btn">Homework list</a>
+        </div>
+      </article>
+
+      <article class="portal-card teacher-card-homework">
+        <div class="teacher-card-head">
+          <h2>Today’s homework</h2>
+          <a routerLink="/teacher/homework" class="teacher-card-link">View all</a>
+        </div>
+        @if (latestHomework.length) {
+          <ul class="teacher-hw-list">
+            @for (h of latestHomework; track h.id) {
+              <li class="teacher-hw-row">
+                <span class="teacher-hw-subject">{{ h.subject }}</span>
+                <span class="teacher-hw-class">{{ h.class }}{{ h.section ? ' · ' + h.section : '' }}</span>
+                <p class="teacher-hw-desc">{{ homeworkPreview(h.description) }}</p>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="portal-empty">No homework for today yet. Add one from quick actions.</p>
+        }
+      </article>
+
+      <article class="portal-card teacher-card-notices">
+        <div class="teacher-card-head">
+          <h2>Latest notices</h2>
+          <a routerLink="/teacher/notices" class="teacher-card-link">Open notices</a>
+        </div>
+        @if (latestNotices.length) {
+          <ul class="teacher-notice-list">
+            @for (n of latestNotices; track n.id) {
+              <li class="teacher-notice-row">
+                <div class="teacher-notice-top">
+                  <span class="teacher-notice-title">{{ n.title }}</span>
+                  @if (n.pinned) {
+                    <span class="teacher-notice-pin">Pinned</span>
+                  }
+                </div>
+                <div class="teacher-notice-meta">
+                  <span>{{ formatShortDate(n.created_at) }}</span>
+                  <span class="teacher-notice-audience">{{ n.audience }}</span>
+                </div>
+                @if (n.body) {
+                  <p class="teacher-notice-body">{{ truncate(n.body, 96) }}</p>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="portal-empty">No notices yet.</p>
+        }
+      </article>
+    </section>
+  </section>
+</div>

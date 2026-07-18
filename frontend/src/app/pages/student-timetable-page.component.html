@@ -1,0 +1,32 @@
+<div class="student-dashboard-shell">
+  <div class="student-dash-body">
+    <header class="student-dash-top">
+      <h1 class="student-dash-greet">Weekly timetable</h1>
+      <p class="student-dash-crumb">Home / Timetable</p>
+    </header>
+
+    <article class="dash-card student-tt-card">
+      <p class="student-tt-lede">
+        @if (loading) {
+          Loading…
+        } @else if (ttLabel) {
+          Showing <strong>{{ ttLabel }}</strong> — active weekdays only.
+        } @else {
+          Your schedule will appear once your profile and class timetable are available.
+        }
+      </p>
+      @if (!loading) {
+        <app-student-timetable-grid
+          [days]="ttDays"
+          [periods]="ttPeriods"
+          [cells]="ttCells"
+          [classLabel]="ttLabel"
+          [noClassMatch]="ttNoMatch"
+          [lightTheme]="true"
+        />
+      } @else {
+        <p class="dash-empty">Loading timetable…</p>
+      }
+    </article>
+  </div>
+</div>

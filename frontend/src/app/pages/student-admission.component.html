@@ -1,0 +1,427 @@
+<header class="page-head adm-page-head">
+  @if (editStudentId != null) {
+    <h1>Edit student (full form)</h1>
+    <p class="lede">
+      All admission sections are prefilled. Update any fields, then save on the last step. Cancel returns to
+      <strong>All students</strong>.
+    </p>
+  } @else {
+    <h1>Student admission</h1>
+    <p class="lede">
+      Complete each step in order. Required fields are marked with an asterisk. Parent phone uses SMS/WhatsApp first,
+      then father’s mobile, then mother’s mobile.
+      <a routerLink="/students/import">Import many students from CSV or Excel</a> on a separate page.
+    </p>
+  }
+</header>
+
+<div class="adm-wizard-shell">
+  @if (loadStudentError) {
+    <p class="err adm-form-err">{{ loadStudentError }}</p>
+    <p class="adm-load-actions">
+      <a class="btn sm" routerLink="/students/all">All students</a>
+      <a class="btn sm primary" routerLink="/students/admission">Blank admission form</a>
+    </p>
+  }
+  @if (loadingStudent) {
+    <p class="muted adm-loading">Loading student…</p>
+  }
+  @if (successMsg) {
+    <p class="adm-success">{{ successMsg }}</p>
+  }
+
+  @if (admissionConfirmation; as ac) {
+    <section class="adm-confirmation" aria-labelledby="adm-confirm-title">
+      <h2 id="adm-confirm-title" class="sr-only">Admission confirmed</h2>
+      <div class="adm-confirm-card">
+        <div class="adm-confirm-banner">Admission confirmation</div>
+        <div class="adm-confirm-profile">
+          @if (ac.photoDataUrl) {
+            <img class="adm-confirm-photo" [src]="ac.photoDataUrl" alt="" />
+          } @else {
+            <div class="adm-confirm-photo adm-confirm-photo--placeholder" aria-hidden="true">
+              {{ confirmationInitials(ac.fullName) }}
+            </div>
+          }
+          <p class="adm-confirm-name">{{ ac.fullName }}</p>
+        </div>
+        <dl class="adm-confirm-rows">
+          <div class="adm-confirm-row">
+            <dt>Registration/ID</dt>
+            <dd>{{ ac.admissionNo }}</dd>
+          </div>
+          <div class="adm-confirm-row">
+            <dt>Class</dt>
+            <dd>{{ confirmationClassLine(ac) }}</dd>
+          </div>
+          <div class="adm-confirm-row">
+            <dt>Admission Date</dt>
+            <dd>{{ ac.admissionDateDisplay }}</dd>
+          </div>
+          <div class="adm-confirm-row">
+            <dt>Account Status</dt>
+            <dd class="adm-confirm-status">
+              <svg class="adm-confirm-check" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+                />
+              </svg>
+              Active
+            </dd>
+          </div>
+        </dl>
+        <p class="adm-confirm-footnote muted">
+          Student portal access is disabled by default after admission. Use
+          <strong>Portal passwords</strong> to enable access later when required.
+        </p>
+        <div class="adm-confirm-actions">
+          <button type="button" class="adm-confirm-print" (click)="printAdmissionLetter()">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"
+              />
+            </svg>
+            Print admission letter
+          </button>
+          <button type="button" class="btn sm" (click)="clearAdmissionConfirmation()">Add another student</button>
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (!admissionConfirmation) {
+  <nav class="adm-stepper" aria-label="Admission steps">
+    @for (ws of wizardSteps; track ws.id) {
+      <button
+        type="button"
+        class="adm-step-pill"
+        [class.adm-step-pill--current]="step === ws.id"
+        [class.adm-step-pill--done]="step > ws.id"
+        [disabled]="!isStepClickable(ws.id) && step !== ws.id"
+        (click)="onStepPillClick(ws.id)"
+      >
+        <span class="adm-step-pill-num">{{ ws.id }}</span>
+        <span class="adm-step-pill-label">{{ ws.short }}</span>
+      </button>
+    }
+  </nav>
+
+  <form
+    (ngSubmit)="onFormSubmit($event)"
+    novalidate
+    class="adm-form-card"
+    [class.adm-form-card--hidden]="loadStudentError || loadingStudent || admissionConfirmation"
+  >
+    @if (step === 1) {
+      <section class="adm-section" aria-labelledby="adm-s1">
+        <div class="adm-sec-head" id="adm-s1">
+          <span class="adm-sec-num">1</span>
+          <h2>Student information</h2>
+        </div>
+        <div class="adm-grid-2">
+          <label class="adm-field">
+            <span class="adm-label">Student name <span class="req">*</span></span>
+            <input type="text" class="input" name="fullName" [(ngModel)]="fullName" placeholder="Name of student" />
+          </label>
+          <div class="adm-field">
+            <span class="adm-label">Picture <span class="adm-hint">(optional)</span></span>
+            <div class="adm-file-box">
+              <input
+                #photoInput
+                id="admPhoto"
+                type="file"
+                class="adm-file-native"
+                accept="image/*"
+                (change)="onPhotoChange($event)"
+              />
+              <label for="admPhoto" class="btn sm adm-file-btn">Choose file</label>
+              <span class="adm-file-name">{{ photoFileLabel || 'No file chosen' }}</span>
+              @if (photoPreview) {
+                <button type="button" class="btn sm ghost adm-file-remove" (click)="clearPhoto()">Remove</button>
+              }
+            </div>
+            @if (photoPreview) {
+              <img class="adm-thumb" [src]="photoPreview" alt="Student preview" />
+            }
+            @if (photoError) {
+              <span class="err">{{ photoError }}</span>
+            }
+          </div>
+          <label class="adm-field">
+            <span class="adm-label">Registration no. <span class="req">*</span></span>
+            @if (lastAdmissionNo && editStudentId == null) {
+              <div class="adm-reg-meta">Last registration: {{ lastAdmissionNo }}</div>
+            }
+            <input type="text" class="input" name="admissionNo" [(ngModel)]="admissionNo" placeholder="Registration no." />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Date of admission <span class="req">*</span></span>
+            <input type="date" class="input" name="dateOfAdmission" [(ngModel)]="dateOfAdmission" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Select class <span class="req">*</span></span>
+            <select class="input" name="className" [(ngModel)]="className">
+              <option value="" disabled>Select class</option>
+              @for (c of schoolRef.classes(); track c.id) {
+                <option [value]="c.name">{{ c.name }}</option>
+              }
+            </select>
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Section</span>
+            <select class="input" name="section" [(ngModel)]="section">
+              <option value="">—</option>
+              @for (letter of sectionLetters; track letter) {
+                <option [value]="letter">{{ letter }}</option>
+              }
+            </select>
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Discount in fee</span>
+            <input type="text" class="input" name="discountPct" [(ngModel)]="discountPct" placeholder="in %" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Mobile no. for SMS / WhatsApp</span>
+            <input type="text" class="input" name="smsPhone" [(ngModel)]="smsPhone" placeholder="e.g. +92 3xx xxxxxxx" />
+          </label>
+        </div>
+      </section>
+    }
+
+    @if (step === 2) {
+      <section class="adm-section" aria-labelledby="adm-s2">
+        <div class="adm-sec-head" id="adm-s2">
+          <span class="adm-sec-num">2</span>
+          <h2>Other information</h2>
+        </div>
+        <div class="adm-grid-2">
+          <label class="adm-field">
+            <span class="adm-label">Date of birth</span>
+            <input type="date" class="input" name="dateOfBirth" [(ngModel)]="dateOfBirth" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Student birth form ID / NIC</span>
+            <input type="text" class="input" name="birthFormNic" [(ngModel)]="birthFormNic" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Orphan student</span>
+            <select class="input" name="orphan" [(ngModel)]="orphan">
+              <option value="">Select</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Gender</span>
+            <select class="input" name="gender" [(ngModel)]="gender">
+              <option value="">Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Caste</span>
+            <input type="text" class="input" name="caste" [(ngModel)]="caste" placeholder="Caste" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">OSC</span>
+            <select class="input" name="osc" [(ngModel)]="osc">
+              <option value="">Select</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Any identification mark?</span>
+            <input type="text" class="input" name="identificationMark" [(ngModel)]="identificationMark" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Previous school</span>
+            <input type="text" class="input" name="previousSchool" [(ngModel)]="previousSchool" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Religion</span>
+            <select class="input" name="religion" [(ngModel)]="religion">
+              <option value="">Religion</option>
+              @for (r of religionOptions; track r) {
+                @if (r) {
+                  <option [value]="r">{{ r }}</option>
+                }
+              }
+            </select>
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Blood group</span>
+            <select class="input" name="bloodGroup" [(ngModel)]="bloodGroup">
+              <option value="">Blood group</option>
+              @for (b of bloodOptions; track b) {
+                @if (b) {
+                  <option [value]="b">{{ b }}</option>
+                }
+              }
+            </select>
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Previous ID / board roll no.</span>
+            <input type="text" class="input" name="previousBoardRoll" [(ngModel)]="previousBoardRoll" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Select family</span>
+            <input type="text" class="input" name="family" [(ngModel)]="family" placeholder="Family name or code" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Disease if any?</span>
+            <input type="text" class="input" name="disease" [(ngModel)]="disease" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Any additional note</span>
+            <input type="text" class="input" name="additionalNote" [(ngModel)]="additionalNote" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Total siblings</span>
+            <input type="text" class="input" name="totalSiblings" [(ngModel)]="totalSiblings" />
+          </label>
+          <label class="adm-field adm-field-full">
+            <span class="adm-label">Address</span>
+            <input type="text" class="input" name="address" [(ngModel)]="address" placeholder="Full address" />
+          </label>
+        </div>
+      </section>
+    }
+
+    @if (step === 3) {
+      <section class="adm-section" aria-labelledby="adm-s3">
+        <div class="adm-sec-head" id="adm-s3">
+          <span class="adm-sec-num">3</span>
+          <h2>Father / guardian information</h2>
+        </div>
+        <div class="adm-grid-2">
+          <label class="adm-field">
+            <span class="adm-label">Father name</span>
+            <input type="text" class="input" name="fatherName" [(ngModel)]="fatherName" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Father national ID</span>
+            <input type="text" class="input" name="fatherNationalId" [(ngModel)]="fatherNationalId" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Occupation</span>
+            <input type="text" class="input" name="fatherOccupation" [(ngModel)]="fatherOccupation" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Education</span>
+            <input type="text" class="input" name="fatherEducation" [(ngModel)]="fatherEducation" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Mobile no.</span>
+            <input type="text" class="input" name="fatherMobile" [(ngModel)]="fatherMobile" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Profession</span>
+            <input type="text" class="input" name="fatherProfession" [(ngModel)]="fatherProfession" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Income</span>
+            <input type="text" class="input" name="fatherIncome" [(ngModel)]="fatherIncome" />
+          </label>
+        </div>
+      </section>
+    }
+
+    @if (step === 4) {
+      <section class="adm-section" aria-labelledby="adm-s4">
+        <div class="adm-sec-head" id="adm-s4">
+          <span class="adm-sec-num">4</span>
+          <h2>Mother information</h2>
+        </div>
+        <div class="adm-grid-2">
+          <label class="adm-field">
+            <span class="adm-label">Mother name</span>
+            <input type="text" class="input" name="motherName" [(ngModel)]="motherName" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Mother national ID</span>
+            <input type="text" class="input" name="motherNationalId" [(ngModel)]="motherNationalId" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Occupation</span>
+            <input type="text" class="input" name="motherOccupation" [(ngModel)]="motherOccupation" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Education</span>
+            <input type="text" class="input" name="motherEducation" [(ngModel)]="motherEducation" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Mobile no.</span>
+            <input type="text" class="input" name="motherMobile" [(ngModel)]="motherMobile" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Profession</span>
+            <input type="text" class="input" name="motherProfession" [(ngModel)]="motherProfession" />
+          </label>
+          <label class="adm-field">
+            <span class="adm-label">Income</span>
+            <input type="text" class="input" name="motherIncome" [(ngModel)]="motherIncome" />
+          </label>
+        </div>
+      </section>
+    }
+
+    @if (step === 5) {
+      <section class="adm-section adm-review" aria-labelledby="adm-s5">
+        <div class="adm-sec-head" id="adm-s5">
+          <span class="adm-sec-num">5</span>
+          <h2>{{ editStudentId != null ? 'Review & save' : 'Review & submit' }}</h2>
+        </div>
+        <p class="adm-review-hint">Check the summary below. Use the step tabs above or <strong>Back</strong> to edit a section.</p>
+        <dl class="adm-dl">
+          <dt>Student</dt>
+          <dd>{{ dash(fullName) }}</dd>
+          <dt>Registration no.</dt>
+          <dd>{{ dash(admissionNo) }}</dd>
+          <dt>Class / section</dt>
+          <dd>{{ dash(className) }} @if (section) { / {{ section }} }</dd>
+          <dt>Date of admission</dt>
+          <dd>{{ dash(dateOfAdmission) }}</dd>
+          <dt>SMS / WhatsApp</dt>
+          <dd>{{ dash(smsPhone) }}</dd>
+          <dt>Date of birth / gender</dt>
+          <dd>{{ dash(dateOfBirth) }} · {{ dash(gender) }}</dd>
+          <dt>Address</dt>
+          <dd>{{ dash(address) }}</dd>
+          <dt>Father</dt>
+          <dd>{{ dash(fatherName) }} — {{ dash(fatherMobile) }}</dd>
+          <dt>Mother</dt>
+          <dd>{{ dash(motherName) }} — {{ dash(motherMobile) }}</dd>
+        </dl>
+      </section>
+    }
+
+    @if (error) {
+      <p class="err adm-form-err">{{ error }}</p>
+    }
+
+    <div class="adm-wizard-footer">
+      <div class="adm-footer-left">
+        <button type="button" class="btn sm ghost" (click)="cancelToDashboard()">Cancel</button>
+      </div>
+      <div class="adm-footer-right">
+        @if (step > 1) {
+          <button type="button" class="btn sm" (click)="prevStep()">Back</button>
+        }
+        @if (step < 5) {
+          <button type="button" class="btn primary sm" (click)="nextStep()">Continue</button>
+        }
+        @if (step === 5) {
+          <button type="submit" class="btn primary sm" [disabled]="saving">
+            {{ saving ? 'Saving…' : editStudentId != null ? 'Save changes' : 'Submit admission' }}
+          </button>
+        }
+      </div>
+    </div>
+  </form>
+  }
+</div>

@@ -1,0 +1,369 @@
+@use './student-portal.shared' as sp;
+
+/* Light polished teacher shell (aligned with student portal “shine”) */
+.teacher-theme .portal-kicker {
+  color: #4338ca;
+}
+
+/* Dashboard body when hosted inside admin shell (sidebar from shell.component) */
+.teacher-dashboard-page {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: #0f172a;
+}
+
+/* Main column: override dark portal-home tokens */
+.teacher-content.portal-page {
+  max-width: none;
+  margin: 0;
+  padding: 0 0 1.5rem;
+  color: #0f172a;
+}
+
+.teacher-dashboard-page .portal-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.35rem 1.45rem;
+  border: 1px solid rgba(129, 140, 248, 0.32);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 42%, #f0f9ff 100%);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 14px 40px rgba(79, 70, 229, 0.1);
+  margin-bottom: 1.1rem;
+}
+
+.teacher-dashboard-page .portal-hero h1 {
+  color: #0f172a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.teacher-dashboard-page .portal-lede {
+  color: #475569;
+}
+
+.teacher-hero {
+  align-items: center;
+}
+
+.teacher-hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-hero-meta {
+  text-align: right;
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(199, 210, 254, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.teacher-hero-date {
+  margin: 0;
+  font-weight: 800;
+  color: #312e81;
+  font-size: 0.95rem;
+}
+
+.teacher-hero-sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.teacher-dashboard-page .portal-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.teacher-dashboard-page .portal-stat {
+  position: relative;
+  border-radius: 16px;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 28px rgba(15, 23, 42, 0.07);
+}
+
+.teacher-dashboard-page .portal-stat::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.teacher-dashboard-page .portal-stat:nth-child(1) {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 50%, #ddd6fe 100%);
+}
+
+.teacher-dashboard-page .portal-stat:nth-child(2) {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+}
+
+.teacher-dashboard-page .portal-stat:nth-child(3) {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%);
+}
+
+.teacher-dashboard-page .portal-stat p {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.55);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.teacher-dashboard-page .portal-stat strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.teacher-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'actions homework'
+    'notices notices';
+  gap: 1.1rem;
+}
+
+.teacher-card-actions {
+  grid-area: actions;
+}
+
+.teacher-card-homework {
+  grid-area: homework;
+}
+
+.teacher-card-notices {
+  grid-area: notices;
+}
+
+.teacher-dashboard-page .portal-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 36px rgba(15, 23, 42, 0.08);
+}
+
+.teacher-dashboard-page .portal-card h2 {
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.teacher-dashboard-page .portal-card p {
+  color: #64748b;
+}
+
+.teacher-dashboard-page .portal-card-primary {
+  border-color: rgba(129, 140, 248, 0.42);
+  background: linear-gradient(165deg, #f5f3ff 0%, #eef2ff 40%, #ffffff 100%);
+  box-shadow:
+    0 1px 2px rgba(79, 70, 229, 0.06),
+    0 14px 40px rgba(79, 70, 229, 0.1);
+}
+
+.teacher-dashboard-page .portal-actions .btn.primary {
+  background: linear-gradient(125deg, #a5b4fc 0%, #6366f1 38%, #4f46e5 100%);
+  border-color: transparent;
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 4px 18px rgba(79, 70, 229, 0.32);
+}
+
+.teacher-dashboard-page .portal-actions .btn.primary:hover {
+  filter: brightness(1.05);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.32) inset,
+    0 8px 24px rgba(79, 70, 229, 0.36);
+}
+
+.teacher-dashboard-page .portal-actions .btn:not(.primary) {
+  border-color: #e2e8f0;
+  background: #fff;
+  color: #334155;
+}
+
+.teacher-dashboard-page .portal-actions .btn:not(.primary):hover {
+  border-color: #c7d2fe;
+  background: #f8fafc;
+}
+
+.teacher-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.teacher-card-head h2 {
+  margin: 0;
+}
+
+.teacher-card-link {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4f46e5;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.teacher-card-link:hover {
+  text-decoration: underline;
+  color: #4338ca;
+}
+
+.teacher-hw-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.teacher-hw-row {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.teacher-hw-subject {
+  display: block;
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.92rem;
+}
+
+.teacher-hw-class {
+  display: block;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.teacher-hw-desc {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.teacher-notice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.teacher-notice-row {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+.teacher-notice-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.teacher-notice-title {
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.teacher-notice-pin {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+
+.teacher-notice-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.teacher-notice-audience {
+  text-transform: capitalize;
+}
+
+.teacher-notice-body {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.teacher-dashboard-page .portal-empty {
+  color: #64748b;
+}
+
+@media (max-width: 960px) {
+  .teacher-dashboard-page {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-hero-meta {
+    text-align: left;
+    width: 100%;
+  }
+
+  .teacher-dashboard-page .portal-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .teacher-dashboard-page .portal-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'actions'
+      'homework'
+      'notices';
+  }
+}

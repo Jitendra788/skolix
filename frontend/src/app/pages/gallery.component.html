@@ -1,0 +1,59 @@
+<header class="page-head">
+  <h1>Functions &amp; gallery</h1>
+  <p class="lede">Manage event photos using image URLs (add file upload later if needed).</p>
+</header>
+
+<section class="crud-panel">
+  <h2>{{ editingId != null ? 'Edit image' : 'Add image' }}</h2>
+  <div class="form-grid">
+    <label>
+      <span>Title</span>
+      <input type="text" [(ngModel)]="title" class="input" />
+    </label>
+    <label>
+      <span>Event name</span>
+      <input type="text" [(ngModel)]="event_name" class="input" />
+    </label>
+    <label class="span-2">
+      <span>Image URL</span>
+      <input type="url" [(ngModel)]="image_url" class="input" placeholder="https://…" />
+    </label>
+    <label>
+      <span>Taken on</span>
+      <input type="date" [(ngModel)]="taken_on" class="input narrow" />
+    </label>
+  </div>
+  @if (error) {
+    <p class="err">{{ error }}</p>
+  }
+  <div class="form-actions">
+    <button type="button" class="btn primary sm" [disabled]="saving" (click)="save()">
+      {{ saving ? 'Saving…' : editingId != null ? 'Update' : 'Create' }}
+    </button>
+    @if (editingId != null) {
+      <button type="button" class="btn sm ghost" (click)="clearForm()">Cancel</button>
+    }
+  </div>
+</section>
+
+@if (images$ | async; as imgs) {
+  <div class="gallery-grid">
+    @for (g of imgs; track g.id) {
+      <figure class="shot">
+        <img [src]="g.image_url" [alt]="g.title" loading="lazy" />
+        <figcaption>
+          <strong>{{ g.title }}</strong>
+          @if (g.event_name) {
+            <span>{{ g.event_name }}</span>
+          }
+          <div class="card-actions">
+            <button type="button" class="btn sm" (click)="edit(g)">Edit</button>
+            <button type="button" class="btn sm danger" (click)="remove(g)">Delete</button>
+          </div>
+        </figcaption>
+      </figure>
+    } @empty {
+      <p class="muted">No images yet.</p>
+    }
+  </div>
+}

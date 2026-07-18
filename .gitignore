@@ -1,0 +1,26 @@
+# Dependencies / build
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+dist/
+.angular/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Nested clone (real app is under frontend/)
+skolix/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*

@@ -1,0 +1,17 @@
+/** Mesh background + reuse for student-facing portal pages */
+@mixin mesh-background {
+  background:
+    radial-gradient(120% 85% at 8% -5%, rgba(251, 191, 36, 0.16), transparent 52%),
+    radial-gradient(90% 72% at 100% 0%, rgba(96, 165, 250, 0.15), transparent 48%),
+    radial-gradient(75% 60% at 50% 105%, rgba(244, 114, 182, 0.11), transparent 52%),
+    linear-gradient(165deg, #f8fafc 0%, #eef2ff 38%, #fff7ed 100%);
+}
+
+/** Cooler mesh for teacher portal (violet / sky / mint) */
+@mixin mesh-background-teacher {
+  background:
+    radial-gradient(120% 85% at 6% -5%, rgba(165, 180, 252, 0.24), transparent 52%),
+    radial-gradient(92% 72% at 100% 4%, rgba(125, 211, 252, 0.2), transparent 48%),
+    radial-gradient(78% 58% at 48% 102%, rgba(167, 243, 208, 0.16), transparent 52%),
+    linear-gradient(165deg, #f8fafc 0%, #eef2ff 34%, #ecfeff 100%);
+}

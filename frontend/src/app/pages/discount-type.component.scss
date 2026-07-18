@@ -1,0 +1,123 @@
+@use './pages-shared.scss';
+
+:host {
+  display: block;
+}
+
+.dt-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.dt-bc {
+  display: flex;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.dt-bc-sep {
+  color: var(--border-strong);
+  user-select: none;
+}
+
+.dt-bc-here {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.dt-head {
+  margin-bottom: 1.5rem;
+}
+
+.dt-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+
+.dt-lede {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 65ch;
+  font-size: 0.9375rem;
+}
+
+.dt-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.dt-err {
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--danger);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+.dt-ok {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.dt-muted {
+  color: var(--muted);
+}
+
+.dt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.dt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.15rem 1.25rem;
+  border-radius: 16px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.dt-card:hover {
+  border-color: var(--border-strong);
+}
+
+.dt-card-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.dt-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dt-card-title {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.dt-card-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.dt-actions {
+  display: flex;
+  gap: 0.65rem;
+}

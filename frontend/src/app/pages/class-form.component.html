@@ -1,0 +1,91 @@
+<div class="cf-fullpage">
+<header class="page-head cf-head">
+  <h1>{{ pageH1 }}</h1>
+  <p class="lede">
+    @if (isCreate) {
+      Enter required details and optional sections. After saving you return to the class list.
+    } @else {
+      Update this class, then return to the list. Change sections on <strong>All Classes</strong> with
+      <strong>Edit sections</strong> on the class card.
+    }
+  </p>
+</header>
+
+<div class="cl-add-card cf-add-card">
+  <h2 class="cl-add-title">{{ formTitle }}</h2>
+  <div class="cl-legend" aria-hidden="true">
+    <span class="cl-legend-req"><span class="cl-dot cl-dot-req"></span> Required*</span>
+    <span class="cl-legend-opt"><span class="cl-dot cl-dot-opt"></span> Optional</span>
+  </div>
+
+  <div class="cl-fields">
+    <label class="cl-float cl-float-req">
+      <span class="cl-float-label">Class Name*</span>
+      <input
+        type="text"
+        class="cl-float-input"
+        [(ngModel)]="className"
+        placeholder="Name Of Class"
+        autocomplete="off"
+      />
+    </label>
+
+    <label class="cl-float cl-float-req">
+      <span class="cl-float-label">Monthly Tuition Fees*</span>
+      <input
+        type="text"
+        class="cl-float-input"
+        [(ngModel)]="monthlyTuition"
+        placeholder="Monthly Tuition Fees"
+        inputmode="decimal"
+        autocomplete="off"
+      />
+    </label>
+
+    <div class="cl-float cl-float-req">
+      <span class="cl-float-label">Select Class Teacher*</span>
+      <select class="cl-float-input cl-float-select" [(ngModel)]="classTeacher">
+        <option value="">Select*</option>
+        @for (f of faculty; track f.id) {
+          <option [value]="f.name">{{ f.name }}</option>
+        }
+      </select>
+    </div>
+
+    @if (isCreate) {
+      <div class="cl-float cl-float-opt">
+        <span class="cl-float-label cl-float-label-opt">Sections (A–F)</span>
+        <p class="cl-section-hint">Optional. Tap letters once each — duplicates are not allowed.</p>
+        <div class="cl-preset-row" role="group" aria-label="Section presets for new class">
+          @for (letter of sectionPresets; track letter) {
+            <button
+              type="button"
+              class="cl-pill"
+              [class.cl-pill-on]="newClassSections.has(letter)"
+              (click)="toggleNewSection(letter)"
+            >
+              {{ letter }}
+            </button>
+          }
+        </div>
+      </div>
+    } @else {
+      <p class="cl-edit-section-hint">
+        To change <strong>sections</strong>, open <a routerLink="/classes/list">All Classes</a> and use
+        <strong>Edit sections</strong> on the class card.
+      </p>
+    }
+  </div>
+
+  @if (classErr) {
+    <p class="cl-form-err">{{ classErr }}</p>
+  }
+
+  <div class="cl-card-actions">
+    <button type="button" class="cl-create-btn" [disabled]="classBusy" (click)="saveClass()">
+      {{ classBusy ? 'Saving…' : isCreate ? '+ Create' : 'Save changes' }}
+    </button>
+    <button type="button" class="cl-cancel-btn" [disabled]="classBusy" (click)="goBackToList()">Cancel</button>
+  </div>
+</div>
+</div>

@@ -1,0 +1,143 @@
+<header class="page-head">
+  <h1>Teacher portal passwords</h1>
+  <p class="lede">
+    Manage teacher portal access and credentials. Use <strong>Manage</strong> to set login id and reset password.
+  </p>
+</header>
+
+<section class="spl-shell">
+  <div class="toolbar spl-toolbar">
+    <input
+      type="search"
+      class="input spl-search"
+      [(ngModel)]="search"
+      (ngModelChange)="onSearchInput()"
+      placeholder="Search teacher name, email, phone, or login id"
+      autocomplete="off"
+    />
+    <button type="button" class="btn sm" (click)="refreshPage()" [disabled]="loading">
+      Refresh
+    </button>
+  </div>
+
+  @if (banner; as pb) {
+    <p class="spl-access-banner" [class.spl-access-banner--err]="pb.error" role="status">
+      {{ pb.text }}
+      <button type="button" class="btn sm ghost spl-access-banner-dismiss" (click)="dismissBanner()">
+        Dismiss
+      </button>
+    </p>
+  }
+
+  @if (loading) {
+    <p class="muted">Loading teachers…</p>
+  }
+  @if (loadError) {
+    <p class="err">{{ loadError }}</p>
+  }
+
+  @if (!loading && !loadError) {
+    <div class="spl-table-wrap">
+      <table class="spl-table">
+        <thead>
+          <tr>
+            <th>Teacher</th>
+            <th>Email / Phone</th>
+            <th>Login id</th>
+            <th class="spl-th-access">Portal access</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of teachers; track t.id) {
+            <tr>
+              <td class="spl-td-name">{{ t.name }}</td>
+              <td>{{ t.email || t.phone || '—' }}</td>
+              <td class="spl-mono">{{ effectiveLoginId(t) }}</td>
+              <td class="spl-td-access">
+                <div class="spl-access-stack">
+                  <label class="spl-toggle spl-toggle--row">
+                    <span class="spl-toggle-slot">
+                      <input
+                        type="checkbox"
+                        class="spl-toggle-input"
+                        role="switch"
+                        [attr.aria-checked]="isPortalAccessOn(t)"
+                        [ngModel]="isPortalAccessOn(t)"
+                        (ngModelChange)="setPortalAccess(t, $event)"
+                        [disabled]="portalToggleBusyId === t.id"
+                      />
+                      <span class="spl-toggle-track" aria-hidden="true">
+                        <span class="spl-toggle-thumb"></span>
+                      </span>
+                    </span>
+                    <span class="spl-toggle-caption">{{ isPortalAccessOn(t) ? 'On' : 'Off' }}</span>
+                  </label>
+                  @if (isPortalAccessOn(t)) {
+                    @if (hasPortalPassword(t)) {
+                      <span class="spl-access-note">Password saved</span>
+                    } @else {
+                      <span class="spl-access-note spl-access-note--warn">No password yet</span>
+                    }
+                  }
+                </div>
+              </td>
+              <td class="spl-td-actions">
+                <button type="button" class="btn sm primary" (click)="openEdit(t)">Manage</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (teachers.length === 0 && search.trim()) {
+      <p class="muted">No teachers match your search.</p>
+    }
+  }
+</section>
+
+@if (dialogOpen && editTeacher; as t) {
+  <div class="spl-backdrop" tabindex="-1" aria-hidden="true" (click)="closeDialog()"></div>
+  <div class="spl-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <div class="spl-modal-inner">
+      <h2 class="spl-dlg-title">Portal login — {{ t.name }}</h2>
+      <p class="spl-dlg-meta muted">{{ t.designation || 'Teacher' }} · {{ t.email || t.phone || '—' }}</p>
+      <p class="spl-dlg-hint muted">
+        Default password pattern:
+        <code class="spl-code">{{ defaultPasswordHint(t) }}</code>
+      </p>
+
+      <label class="spl-field">
+        <span class="spl-label">Login id</span>
+        <input type="text" class="input" [(ngModel)]="formUsername" placeholder="Leave blank to use email/phone fallback" autocomplete="off" />
+      </label>
+      <p class="spl-hint muted">
+        Effective login id:
+        <strong class="spl-mono">{{ formUsername.trim() || effectiveLoginId(t) }}</strong>
+      </p>
+
+      <div class="spl-field">
+        <span class="spl-label">New password (optional)</span>
+        <input type="password" class="input" [(ngModel)]="formPassword" autocomplete="new-password" placeholder="At least 6 characters" />
+      </div>
+      <div class="spl-field">
+        <span class="spl-label">Confirm password</span>
+        <input type="password" class="input" [(ngModel)]="formPassword2" autocomplete="new-password" placeholder="Re-enter new password" />
+      </div>
+
+      @if (saveError) {
+        <p class="err">{{ saveError }}</p>
+      }
+
+      <div class="spl-modal-actions">
+        <button type="button" class="btn danger spl-danger" [disabled]="saving" (click)="clearPassword(t)">
+          Clear password + disable
+        </button>
+        <button type="button" class="btn ghost" [disabled]="saving" (click)="closeDialog()">Cancel</button>
+        <button type="button" class="btn primary" [disabled]="saving" (click)="save()">
+          {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

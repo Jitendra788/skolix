@@ -1,0 +1,193 @@
+<div class="ip-page">
+  <nav class="ip-breadcrumb" aria-label="Breadcrumb">
+    <span>General settings</span>
+    <span class="ip-bc-sep">/</span>
+    <span class="ip-bc-here">Institute profile</span>
+  </nav>
+
+  <div class="ip-header-block">
+    <h1 class="ip-title">Institute profile</h1>
+    <p class="ip-legend">
+      <span class="ip-legend-pill ip-legend-req">Required</span>
+      <span class="ip-legend-pill ip-legend-opt">Optional</span>
+      <span class="ip-legend-text">Fields marked with <span class="ip-ast">*</span> must be completed.</span>
+    </p>
+  </div>
+
+  @if (err) {
+    <p class="ip-alert ip-alert-err">{{ err }}</p>
+  }
+  @if (ok) {
+    <p class="ip-alert ip-alert-ok">{{ ok }}</p>
+  }
+
+  <div class="ip-layout">
+    <div class="ip-form-card">
+      @if (loading) {
+        <p class="ip-muted">Loading…</p>
+      } @else {
+        <div class="ip-form-grid">
+          <div class="ip-logo-block">
+            <span class="ip-label ip-label-req">Institute logo</span>
+            <div class="ip-logo-box">
+              @if (logoData) {
+                <img [src]="logoData" alt="Logo preview" class="ip-logo-img" />
+              } @else {
+                <div class="ip-logo-ph">Your logo here</div>
+              }
+            </div>
+            <div class="ip-logo-actions">
+              <label class="btn ip-btn-change">
+                Change logo
+                <input type="file" accept="image/*" class="ip-file" (change)="onLogoChange($event)" />
+              </label>
+              @if (logoData) {
+                <button type="button" class="btn ip-btn-text" (click)="clearLogo()">Remove</button>
+              }
+            </div>
+            @if (logoErr) {
+              <p class="ip-logo-err">{{ logoErr }}</p>
+            }
+          </div>
+
+          <label class="ip-field span-2">
+            <span class="ip-label ip-label-req">Name of institute<span class="ip-ast">*</span></span>
+            <input type="text" class="input ip-input" [(ngModel)]="name" placeholder="Institute name" />
+          </label>
+
+          <label class="ip-field span-2">
+            <span class="ip-label ip-label-req">Target line<span class="ip-ast">*</span></span>
+            <input type="text" class="input ip-input" [(ngModel)]="tagline" placeholder="Target line" />
+          </label>
+
+          <label class="ip-field">
+            <span class="ip-label ip-label-req">Phone number<span class="ip-ast">*</span></span>
+            <input type="text" class="input ip-input" [(ngModel)]="phone" placeholder="Phone no." />
+          </label>
+
+          <label class="ip-field">
+            <span class="ip-label ip-label-opt">Website</span>
+            <input type="url" class="input ip-input" [(ngModel)]="website" placeholder="Website URL" />
+          </label>
+
+          <label class="ip-field span-2">
+            <span class="ip-label ip-label-req">Email<span class="ip-ast">*</span></span>
+            <input type="email" class="input ip-input" [(ngModel)]="email" placeholder="Email address" />
+          </label>
+
+          <label class="ip-field span-2">
+            <span class="ip-label ip-label-req">Address<span class="ip-ast">*</span></span>
+            <input type="text" class="input ip-input" [(ngModel)]="address" placeholder="Address" />
+          </label>
+
+          <label class="ip-field span-2">
+            <span class="ip-label ip-label-req">Country<span class="ip-ast">*</span></span>
+            <select class="input ip-input" [(ngModel)]="country">
+              <option value="">Select country</option>
+              @for (c of countries; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="ip-field span-2">
+            <span class="ip-label ip-label-opt">School established on</span>
+            <input
+              type="date"
+              class="input ip-input"
+              [(ngModel)]="established_on"
+              title="Shown on the dashboard as an annual school anniversary"
+            />
+          </label>
+        </div>
+
+        <div class="ip-actions">
+          <button type="button" class="ip-btn-update" [disabled]="saving" (click)="save()">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            {{ saving ? 'Saving…' : 'Update profile' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <aside class="ip-preview-card" aria-label="Profile preview">
+      <span class="ip-preview-badge">Profile view</span>
+      <div class="ip-preview-head">
+        @if (logoData) {
+          <img [src]="logoData" alt="" class="ip-preview-logo" />
+        } @else {
+          <div class="ip-preview-logo-ph">Logo</div>
+        }
+        <div>
+          <div class="ip-preview-name">{{ previewName() }}</div>
+          <div class="ip-preview-tag">{{ previewTagline() }}</div>
+        </div>
+      </div>
+      <hr class="ip-preview-rule" />
+      <ul class="ip-preview-list">
+        <li>
+          <span class="ip-pv-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+          </span>
+          <div>
+            <span class="ip-pv-k">Phone</span>
+            <span class="ip-pv-v">{{ previewPhone() }}</span>
+          </div>
+        </li>
+        <li>
+          <span class="ip-pv-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22 6 12 13 2 6" />
+            </svg>
+          </span>
+          <div>
+            <span class="ip-pv-k">Email</span>
+            <span class="ip-pv-v">{{ previewEmail() }}</span>
+          </div>
+        </li>
+        <li>
+          <span class="ip-pv-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+          </span>
+          <div>
+            <span class="ip-pv-k">Website</span>
+            <span class="ip-pv-v">{{ previewLine(website) }}</span>
+          </div>
+        </li>
+        <li>
+          <span class="ip-pv-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </span>
+          <div>
+            <span class="ip-pv-k">Address</span>
+            <span class="ip-pv-v">{{ previewLine(address) }}</span>
+          </div>
+        </li>
+        <li>
+          <span class="ip-pv-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+            </svg>
+          </span>
+          <div>
+            <span class="ip-pv-k">Country</span>
+            <span class="ip-pv-v">{{ previewLine(country) }}</span>
+          </div>
+        </li>
+      </ul>
+    </aside>
+  </div>
+</div>

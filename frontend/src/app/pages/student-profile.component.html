@@ -1,0 +1,108 @@
+<div class="student-dashboard-shell">
+  <div class="student-dash-body student-dash--profile-full">
+    <header class="student-dash-top sp-top-with-actions">
+      <div class="sp-top-titles">
+        <h1 class="student-dash-greet">My profile</h1>
+        <p class="student-dash-crumb">Home / Profile</p>
+      </div>
+    </header>
+
+    @if (loading) {
+      <p class="sp-loading">Loading…</p>
+    } @else if (error && !profile) {
+      <p class="sp-err">{{ error }}</p>
+    } @else {
+      <section class="dash-card sp-card">
+        <div class="sp-card-head">
+          <div>
+            <h2 class="dash-card-title sp-card-title">Edit profile</h2>
+            <p class="sp-hint sp-hint-tight">
+              Update your name, parent contact, date of birth, and photo. Class and admission number are set by the school.
+            </p>
+          </div>
+        </div>
+        @if (error) {
+          <p class="sp-err">{{ error }}</p>
+        }
+        @if (savedMsg) {
+          <p class="sp-ok">{{ savedMsg }}</p>
+        }
+        <div class="sp-layout">
+          <div class="sp-form-col">
+            <div class="sp-fieldset">
+              <h3 class="sp-fieldset-title">Photo</h3>
+              <label class="sp-label">
+                <span>Image URL</span>
+                <input type="url" class="sp-input" [(ngModel)]="draft.profile_photo_url" placeholder="https://…" />
+              </label>
+              <p class="sp-micro">Paste a link to a square image (Google Drive direct links often do not work).</p>
+            </div>
+
+            <div class="sp-fieldset">
+              <h3 class="sp-fieldset-title">Student</h3>
+              <label class="sp-label">
+                <span>Full name *</span>
+                <input type="text" class="sp-input" [(ngModel)]="draft.full_name" autocomplete="name" />
+              </label>
+              <div class="sp-row2">
+                <label class="sp-label">
+                  <span>Date of birth</span>
+                  <input type="date" class="sp-input" [(ngModel)]="draft.date_of_birth" />
+                </label>
+                <label class="sp-label">
+                  <span>Gender</span>
+                  <select class="sp-input sp-select" [(ngModel)]="draft.gender">
+                    <option value="">— Select —</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="sp-fieldset">
+              <h3 class="sp-fieldset-title">Parent / guardian</h3>
+              <label class="sp-label">
+                <span>Name</span>
+                <input type="text" class="sp-input" [(ngModel)]="draft.parent_name" autocomplete="section-parent name" />
+              </label>
+              <label class="sp-label">
+                <span>Phone</span>
+                <input type="tel" class="sp-input" [(ngModel)]="draft.parent_phone" autocomplete="tel" />
+              </label>
+            </div>
+
+            <div class="sp-readonly">
+              <p><strong>Admission no.</strong> {{ profile?.admission_no }}</p>
+              <p>
+                <strong>Class</strong> {{ profile?.class_name }} @if (profile?.section) { · Sec {{ profile?.section }} }
+              </p>
+            </div>
+
+            <div class="sp-actions">
+              <button type="button" class="dash-btn dash-btn-primary sp-save" [disabled]="saving" (click)="save()">
+                {{ saving ? 'Saving…' : 'Save changes' }}
+              </button>
+              <button type="button" class="sp-discard" [disabled]="saving" (click)="discardChanges()">
+                Reset form
+              </button>
+            </div>
+          </div>
+
+          <aside class="sp-preview" aria-label="Profile photo preview">
+            <p class="sp-preview-label">Preview</p>
+            <div class="sp-preview-frame">
+              @if (profilePhotoUrl(); as src) {
+                <img [src]="src" alt="" referrerpolicy="no-referrer" />
+              } @else {
+                <span class="sp-preview-fallback">{{ userInitial() }}</span>
+              }
+            </div>
+            <p class="sp-preview-hint">This is how your photo appears in the portal after you save.</p>
+          </aside>
+        </div>
+      </section>
+    }
+  </div>
+</div>

@@ -1,0 +1,83 @@
+<header class="page-head">
+  <h1>PTM updates</h1>
+  <p class="lede">Schedule parent–teacher meetings and keep notes by class.</p>
+</header>
+
+<section class="crud-panel">
+  <h2>{{ editingId != null ? 'Edit PTM' : 'New PTM' }}</h2>
+  <div class="form-grid">
+    <label>
+      <span>Class</span>
+      <select [(ngModel)]="class_name" class="input">
+        <option value="" disabled>Select class</option>
+        @for (c of schoolRef.classes(); track c.id) {
+          <option [value]="c.name">{{ c.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>Date &amp; time</span>
+      <input type="datetime-local" [(ngModel)]="scheduled_local" class="input" />
+    </label>
+    <label class="span-2">
+      <span>Venue</span>
+      <input type="text" [(ngModel)]="venue" class="input" />
+    </label>
+    <label class="span-2">
+      <span>Agenda / notes</span>
+      <textarea [(ngModel)]="agenda" class="input" rows="3"></textarea>
+    </label>
+  </div>
+  @if (error) {
+    <p class="err">{{ error }}</p>
+  }
+  <div class="form-actions">
+    <button type="button" class="btn primary sm" [disabled]="saving" (click)="save()">
+      {{ saving ? 'Saving…' : editingId != null ? 'Update' : 'Create' }}
+    </button>
+    @if (editingId != null) {
+      <button type="button" class="btn sm ghost" (click)="clearForm()">Cancel</button>
+    }
+  </div>
+</section>
+
+<div class="toolbar">
+  <select [(ngModel)]="filterInput" class="input filter-select">
+    <option value="">All classes</option>
+    @for (c of schoolRef.classes(); track c.id) {
+      <option [value]="c.name">{{ c.name }}</option>
+    }
+  </select>
+  <button type="button" class="btn primary" (click)="applyFilter()">Apply filter</button>
+</div>
+
+@if (items$ | async; as rows) {
+  <div class="cards">
+    @for (r of rows; track r.id) {
+      <article class="card">
+        <div class="card-head">
+          <h2>{{ r.class_name }}</h2>
+        </div>
+        <p class="card-body">
+          <strong>When:</strong> {{ r.scheduled_at | date: 'fullDate' }},
+          {{ r.scheduled_at | date: 'shortTime' }}<br />
+          @if (r.venue) {
+            <strong>Venue:</strong> {{ r.venue }}<br />
+          }
+          @if (r.agenda) {
+            <span>{{ r.agenda }}</span>
+          }
+        </p>
+        <footer class="card-foot">
+          <span>Logged {{ r.created_at | date: 'medium' }}</span>
+        </footer>
+        <div class="card-actions">
+          <button type="button" class="btn sm" (click)="edit(r)">Edit</button>
+          <button type="button" class="btn sm danger" (click)="remove(r)">Delete</button>
+        </div>
+      </article>
+    } @empty {
+      <p class="muted">No PTM entries for this filter.</p>
+    }
+  </div>
+}

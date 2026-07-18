@@ -1,0 +1,248 @@
+<div class="ef-page">
+  <div class="ef-top-row">
+    <nav class="ef-bc" aria-label="Breadcrumb">
+      <span>Employees</span>
+      <span class="ef-bc-sep">|</span>
+      <a routerLink="/dashboard" class="ef-bc-home" aria-label="Dashboard">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+      </a>
+      <span class="ef-bc-sep">–</span>
+      <span class="ef-bc-here">{{ editingId != null ? 'Edit staff' : 'New staff' }}</span>
+    </nav>
+    <button type="button" class="ef-customize" title="Coming soon">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+        />
+      </svg>
+      Customize
+    </button>
+  </div>
+
+  <h1 class="ef-title">Employee form</h1>
+  <p class="ef-legend">
+    <span class="ef-legend-pill ef-legend-req">Required*</span>
+    <span class="ef-legend-note">All main fields below are required. Subject, class, and extra links are optional.</span>
+  </p>
+
+  @if (error) {
+    <p class="ef-alert ef-alert-err">{{ error }}</p>
+  }
+
+  <div class="ef-form-card">
+    <section class="ef-section" aria-labelledby="ef-sec1">
+      <h2 id="ef-sec1" class="ef-section-title">
+        <span class="ef-sec-num">1</span>
+        Basic Information
+      </h2>
+      <div class="ef-sec-rule"></div>
+
+      <div class="ef-grid">
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Employee Name<span class="ef-ast">*</span></span>
+          <input type="text" class="ef-control" [(ngModel)]="name" name="facName" placeholder="Name of Employee" />
+        </label>
+
+        <div class="ef-field ef-field-file span-2">
+          <span class="ef-pill ef-pill-req">Picture<span class="ef-ast">*</span></span>
+          <div class="ef-file-row">
+            @if (photoData) {
+              <img [src]="photoData" alt="" class="ef-photo-preview" />
+            }
+            <label class="ef-file-btn">
+              Choose file
+              <input type="file" accept="image/*" class="ef-file-input" (change)="onPictureChange($event)" />
+            </label>
+            <span class="ef-file-native-hint">No file chosen</span>
+            @if (photoData) {
+              <button type="button" class="ef-file-clear" (click)="clearPicture()">Remove file</button>
+            }
+          </div>
+          <span class="ef-file-hint">Max size 100KB. Or use photo URL below.</span>
+          @if (photoErr) {
+            <span class="ef-file-err">{{ photoErr }}</span>
+          }
+          <label class="ef-url-under-picture">
+            <span class="ef-url-label">Photo URL (alternative to file)</span>
+            <input
+              type="url"
+              class="ef-control"
+              [(ngModel)]="photo_url"
+              name="facPhotoUrlMain"
+              placeholder="https://…"
+            />
+          </label>
+        </div>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Mobile No for SMS/WhatsApp<span class="ef-ast">*</span></span>
+          <input type="text" class="ef-control" [(ngModel)]="phone" name="facPhone" placeholder="e.g +44xxxxxxxxxx" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Date of Joining<span class="ef-ast">*</span></span>
+          <input type="date" class="ef-control" [(ngModel)]="date_joining" name="facDoj" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Employee Role<span class="ef-ast">*</span></span>
+          <select class="ef-control ef-select" [(ngModel)]="designation" name="facRole">
+            <option value="">Select*</option>
+            @for (r of roleOptions; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Monthly Salary<span class="ef-ast">*</span></span>
+          <input type="text" class="ef-control" [(ngModel)]="monthly_salary" name="facSal" placeholder="Monthly Salary" />
+        </label>
+      </div>
+    </section>
+
+    <section class="ef-section" aria-labelledby="ef-sec2">
+      <h2 id="ef-sec2" class="ef-section-title">
+        <span class="ef-sec-num">2</span>
+        Other Information
+      </h2>
+      <div class="ef-sec-rule"></div>
+
+      <div class="ef-grid">
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Father / Husband Name<span class="ef-ast">*</span></span>
+          <input type="text" class="ef-control" [(ngModel)]="guardian_name" name="facGuardian" placeholder="Father / Husband Name" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">National ID<span class="ef-ast">*</span></span>
+          <input type="text" class="ef-control" [(ngModel)]="national_id" name="facNid" placeholder="National ID" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Education<span class="ef-ast">*</span></span>
+          <input type="text" class="ef-control" [(ngModel)]="education" name="facEdu" placeholder="Education" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Gender<span class="ef-ast">*</span></span>
+          <select class="ef-control ef-select" [(ngModel)]="gender" name="facGender">
+            <option value="">Select</option>
+            @for (g of genderOptions; track g) {
+              <option [value]="g">{{ g }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Religion<span class="ef-ast">*</span></span>
+          <select class="ef-control ef-select" [(ngModel)]="religion" name="facRel">
+            <option value="">Select</option>
+            @for (r of religionOptions; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Blood Group<span class="ef-ast">*</span></span>
+          <select class="ef-control ef-select" [(ngModel)]="blood_group" name="facBlood">
+            <option value="">Select</option>
+            @for (b of bloodOptions; track b) {
+              <option [value]="b">{{ b }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Experience<span class="ef-ast">*</span></span>
+          <input type="text" class="ef-control" [(ngModel)]="experience" name="facExp" placeholder="Experience" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Email Address<span class="ef-ast">*</span></span>
+          <input type="email" class="ef-control" [(ngModel)]="email" name="facEmail" placeholder="Email Address" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-req">Date of Birth<span class="ef-ast">*</span></span>
+          <input type="date" class="ef-control" [(ngModel)]="date_of_birth" name="facDob" />
+          <span class="ef-date-hint">dd-mm-yyyy (use the date picker)</span>
+        </label>
+
+        <label class="ef-field span-2">
+          <span class="ef-pill ef-pill-req">Home Address<span class="ef-ast">*</span></span>
+          <input type="text" class="ef-control" [(ngModel)]="home_address" name="facAddr" placeholder="Home Address" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-opt">Subject taught</span>
+          <input type="text" class="ef-control" [(ngModel)]="subject" name="facSubj" placeholder="e.g. Mathematics" />
+        </label>
+
+        <label class="ef-field">
+          <span class="ef-pill ef-pill-opt">Class assigned</span>
+          <input type="text" class="ef-control" [(ngModel)]="class_assigned" name="facClass" placeholder="e.g. Class 10" />
+        </label>
+      </div>
+    </section>
+
+    <div class="ef-actions">
+      <button type="button" class="ef-btn-reset" (click)="resetForm()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+        </svg>
+        Reset
+      </button>
+      <button type="button" class="ef-btn-submit" [disabled]="saving" (click)="save()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        {{ saving ? 'Saving…' : editingId != null ? 'Update' : 'Submit' }}
+      </button>
+    </div>
+  </div>
+
+  @if (faculty$ | async; as people) {
+    <section class="ef-roster" aria-label="Staff directory">
+      <h2 class="ef-roster-title">Staff directory</h2>
+      <div class="faculty-grid">
+        @for (p of people; track p.id) {
+          <article class="person">
+            @if (staffPhotoSrc(p); as src) {
+              <img [src]="src" alt="" class="person-photo" />
+            } @else {
+              <div class="avatar">{{ (p.name && p.name.charAt(0)) || '?' }}</div>
+            }
+            <div class="info">
+              <h3>{{ p.name }}</h3>
+              <p class="role">{{ p.subject ? p.designation + ' · ' + p.subject : p.designation }}</p>
+              @if (p.class_assigned) {
+                <p class="meta">Class: {{ p.class_assigned }}</p>
+              }
+              @if (p.phone) {
+                <p class="meta">{{ p.phone }}</p>
+              }
+              @if (p.email) {
+                <p class="meta">{{ p.email }}</p>
+              }
+              @if (p.monthly_salary) {
+                <p class="meta">Salary: {{ p.monthly_salary }}</p>
+              }
+              <div class="card-actions">
+                <button type="button" class="btn sm" (click)="edit(p)">Edit</button>
+                <button type="button" class="btn sm danger" (click)="remove(p)">Delete</button>
+              </div>
+            </div>
+          </article>
+        } @empty {
+          <p class="muted">No faculty records.</p>
+        }
+      </div>
+    </section>
+  }
+</div>

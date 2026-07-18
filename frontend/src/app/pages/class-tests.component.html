@@ -1,0 +1,208 @@
+<section class="ct-page">
+  <header class="ct-head">
+    <h1>Class Tests</h1>
+    <p>Add/Update Test Marks</p>
+  </header>
+
+  <div class="ct-tabs">
+    <button type="button" class="ct-tab" [class.active]="activeTab() === 'manage'" (click)="switchTab('manage')">
+      Manage Test Marks
+    </button>
+    <button type="button" class="ct-tab" [class.active]="activeTab() === 'result'" (click)="switchTab('result')">
+      Test Result
+    </button>
+  </div>
+
+  @if (activeTab() === 'manage') {
+    <section class="ct-card">
+      <div class="ct-filters">
+        <label class="ct-field">
+          <span class="ct-chip">Select Class*</span>
+          <select class="ct-input" [ngModel]="selectedClass()" (ngModelChange)="onManageClassChange($event)">
+            <option value="">Select class</option>
+            @for (c of classes(); track c.id) {
+              <option [value]="c.name">{{ c.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="ct-field">
+          <span class="ct-chip">Select Subject*</span>
+          <select
+            class="ct-input"
+            [ngModel]="selectedSubject()"
+            (ngModelChange)="onManageSubjectChange($event)"
+            [disabled]="!selectedClass() || loadingSubjects()"
+          >
+            <option value="">Select subject</option>
+            @for (s of subjects(); track s.id) {
+              <option [value]="s.subject_name">{{ s.subject_name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="ct-field">
+          <span class="ct-chip">Test Date*</span>
+          <input
+            class="ct-input"
+            type="date"
+            [min]="testDateMinIso()"
+            [max]="testDateMaxIso()"
+            [ngModel]="testDate()"
+            (ngModelChange)="onTestDateChange($event)"
+            [disabled]="!selectedSubject()"
+          />
+          <small class="ct-hint">Within ±2 months ({{ testDateMinIso() }} – {{ testDateMaxIso() }}).</small>
+        </label>
+      </div>
+
+      <div class="ct-marks-panel">
+        <h2>Add/update Test Marks</h2>
+        <label class="ct-total">
+          <span class="ct-chip">Total Test Marks*</span>
+          <input
+            class="ct-input"
+            type="number"
+            [ngModel]="totalMarks()"
+            (ngModelChange)="onTotalMarksChange($event)"
+            min="1"
+          />
+        </label>
+
+        @if (loadingSubjects()) {
+          <p class="ct-note">Loading subjects...</p>
+        }
+        @if (totalMarks() != null && (totalMarks() ?? 0) > 0) {
+          <p class="ct-hint">Obtained marks cannot exceed total ({{ totalMarks() }}).</p>
+        }
+
+        <div class="ct-table-wrap">
+          <table class="ct-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Student Name</th>
+                <th>Obtained Marks</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (!selectedClass()) {
+                <tr>
+                  <td colspan="3" class="ct-empty">Select class first.</td>
+                </tr>
+              } @else if (!selectedSubject()) {
+                <tr>
+                  <td colspan="3" class="ct-empty">Now select subject.</td>
+                </tr>
+              } @else if (!testDate()) {
+                <tr>
+                  <td colspan="3" class="ct-empty">Now select test date.</td>
+                </tr>
+              } @else if (!students().length) {
+                <tr>
+                  <td colspan="3" class="ct-empty">No students found in selected class.</td>
+                </tr>
+              } @else {
+                @for (s of students(); track s.id) {
+                  <tr>
+                    <td data-label="ID">{{ s.admission_no }}</td>
+                    <td data-label="Student">{{ s.full_name }}</td>
+                    <td data-label="Marks">
+                      <input
+                        class="ct-mark-input"
+                        type="number"
+                        min="0"
+                        step="1"
+                        [attr.max]="totalMarks() != null && (totalMarks() ?? 0) > 0 ? totalMarks() : null"
+                        [ngModel]="obtainedByStudentId()[s.id] ?? ''"
+                        (ngModelChange)="setObtained(s.id, $event)"
+                        (blur)="clampObtainedOnBlur(s.id, $any($event.target))"
+                      />
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ct-actions">
+          <button
+            type="button"
+            class="ct-save-btn"
+            [disabled]="manageSaveDisabled()"
+            (click)="saveMarks()"
+          >
+            Save Test Marks
+          </button>
+        </div>
+        @if (saveMessage()) {
+          <p class="ct-message">{{ saveMessage() }}</p>
+        }
+      </div>
+    </section>
+  } @else {
+    <section class="ct-card">
+      <div class="ct-filters">
+        <label class="ct-field">
+          <span class="ct-chip">Class</span>
+          <select class="ct-input" [ngModel]="resultClass()" (ngModelChange)="resultClass.set($event)">
+            <option value="">All classes</option>
+            @for (c of classes(); track c.id) {
+              <option [value]="c.name">{{ c.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="ct-field">
+          <span class="ct-chip">Subject</span>
+          <input
+            class="ct-input"
+            type="text"
+            placeholder="Filter by subject"
+            [ngModel]="resultSubject()"
+            (ngModelChange)="resultSubject.set($event)"
+          />
+        </label>
+      </div>
+
+      @if (!filteredResults().length) {
+        <p class="ct-note">No saved test result found for selected filter.</p>
+      } @else {
+        @for (r of filteredResults(); track r.id) {
+          <article class="ct-result-card">
+            <header>
+              <strong>{{ r.class_name }} - {{ r.subject }}</strong>
+              <span>{{ r.test_date }} | Total: {{ r.total_marks }}</span>
+            </header>
+            <div class="ct-table-wrap">
+              <table class="ct-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Student Name</th>
+                    <th>Obtained</th>
+                    <th>%</th>
+                    <th>Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of r.rows; track row.student_id) {
+                    @let percent = rowPercent(row, r.total_marks);
+                    <tr>
+                      <td data-label="ID">{{ row.admission_no }}</td>
+                      <td data-label="Student">{{ row.student_name }}</td>
+                      <td data-label="Obtained">{{ row.obtained_marks }}</td>
+                      <td data-label="%">{{ percent }}</td>
+                      <td data-label="Grade">{{ rowGrade(percent) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </article>
+        }
+      }
+    </section>
+  }
+</section>

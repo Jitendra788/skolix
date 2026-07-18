@@ -1,0 +1,157 @@
+<header class="page-head">
+  <h1>Student ID card</h1>
+  <p class="lede">
+    Search a student, pick a <strong>landscape</strong> or <strong>vertical</strong> layout (15 styles each), then download a PDF or print.
+    Output matches the preview.
+  </p>
+</header>
+
+<section class="sid-shell">
+  <label class="sid-field sid-field--search">
+    <span class="sid-label">Search student</span>
+    <input
+      type="search"
+      class="input"
+      [(ngModel)]="studentSearch"
+      (ngModelChange)="onSearchChange()"
+      placeholder="Name or admission number"
+      autocomplete="off"
+    />
+  </label>
+
+  <label class="sid-field">
+    <span class="sid-label">Select student</span>
+    <select class="input" [(ngModel)]="selectedStudentId">
+      @if (filteredStudents.length === 0) {
+        <option [ngValue]="null" disabled>No matches</option>
+      }
+      @for (s of filteredStudents; track s.id) {
+        <option [ngValue]="s.id">
+          {{ s.full_name }} — {{ s.admission_no }} ({{ studentClassLine(s) }})
+        </option>
+      }
+    </select>
+  </label>
+
+  @if (loading) {
+    <p class="muted">Loading students…</p>
+  }
+  @if (loadError) {
+    <p class="err">{{ loadError }}</p>
+    <button type="button" class="btn sm" (click)="loadStudents()">Retry</button>
+  }
+
+  @if (selectedStudent; as st) {
+    <h2 class="sid-h2">Templates</h2>
+    <p class="sid-hint muted">
+      Landscape cards are wide; vertical (V1–V15) are portrait and use a single bordered details block for Reg. no., class, etc.
+      Scroll template rows horizontally on small screens.
+    </p>
+
+    <h3 class="sid-h3">Landscape (15)</h3>
+    <div class="sid-tpl-scroll">
+      <div class="sid-tpl-grid" role="list">
+        @for (t of landscapeTemplateOptions; track t.id) {
+          <button
+            type="button"
+            class="sid-tpl-btn"
+            [class.sid-tpl-btn--on]="selectedTemplate === t.id"
+            (click)="selectTemplate(t.id)"
+            [attr.aria-pressed]="selectedTemplate === t.id"
+          >
+            <span class="sid-tpl-num">{{ $index + 1 }}</span>
+            <span class="sid-tpl-name">{{ t.name }}</span>
+            <span class="sid-tpl-hint">{{ t.hint }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <h3 class="sid-h3">Vertical / portrait (15)</h3>
+    <div class="sid-tpl-scroll">
+      <div class="sid-tpl-grid" role="list">
+        @for (t of verticalTemplateOptions; track t.id) {
+          <button
+            type="button"
+            class="sid-tpl-btn sid-tpl-btn--vert"
+            [class.sid-tpl-btn--on]="selectedTemplate === t.id"
+            (click)="selectTemplate(t.id)"
+            [attr.aria-pressed]="selectedTemplate === t.id"
+          >
+            <span class="sid-tpl-num">V{{ $index + 1 }}</span>
+            <span class="sid-tpl-name">{{ t.name }}</span>
+            <span class="sid-tpl-hint">{{ t.hint }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="sid-stage">
+      <div #pdfRoot [class]="idcRootClass()">
+        <header class="idc__hdr">
+          <span class="idc__school">{{ instituteName || 'School' }}</span>
+          <span class="idc__badge">ID</span>
+        </header>
+        <div class="idc__body">
+          <div class="idc__photoWrap">
+            @if (studentPhotoUrl(st); as photo) {
+              <img class="idc__photo" [src]="photo" alt="" />
+            } @else {
+              <div class="idc__photo idc__photo--ph" aria-hidden="true">
+                {{ initials(st.full_name) }}
+              </div>
+            }
+          </div>
+          <div class="idc__info">
+            <p class="idc__name">{{ st.full_name }}</p>
+            <dl class="idc__dl">
+              <div>
+                <dt>Reg. no.</dt>
+                <dd>{{ st.admission_no }}</dd>
+              </div>
+              <div>
+                <dt>Class</dt>
+                <dd>{{ studentClassLine(st) }}</dd>
+              </div>
+              <div>
+                <dt>Blood group</dt>
+                <dd>{{ studentBloodGroup(st) }}</dd>
+              </div>
+              <div>
+                <dt>Session</dt>
+                <dd>{{ academicYearShort() }}</dd>
+              </div>
+              <div class="idc__dl-emergency">
+                <dt>Emergency contact</dt>
+                <dd>{{ studentEmergencyContact(st) }}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        <footer class="idc__ftr">
+          <span class="idc__issued">Valid from {{ issueDateDisplay() }}</span>
+          <span class="idc__ftr-accent" aria-hidden="true"></span>
+        </footer>
+      </div>
+    </div>
+
+    @if (pdfError) {
+      <p class="err sid-err">{{ pdfError }}</p>
+    }
+
+    <div class="sid-actions">
+      <button
+        type="button"
+        class="btn primary"
+        (click)="downloadPdf()"
+        [disabled]="pdfExporting"
+      >
+        {{ pdfExporting ? 'Working…' : 'Download PDF' }}
+      </button>
+      <button type="button" class="btn" (click)="printIdCard()" [disabled]="pdfExporting">
+        Print
+      </button>
+      <a class="btn sm ghost" routerLink="/students/admission-letter">Admission letter</a>
+    </div>
+  }
+</section>

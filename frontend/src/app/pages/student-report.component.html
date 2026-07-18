@@ -1,0 +1,179 @@
+@if (report$ | async; as r) {
+  @if (r) {
+    <div class="student-report-page">
+      <header class="sr-head no-print">
+        <div>
+          <p class="sr-brand">eSkooly</p>
+          <p class="sr-sub">YOUR SCHOOL SOFTWARE</p>
+        </div>
+        <div class="sr-head-actions">
+          <a routerLink="/reports/students-report-card" class="sr-link">Back</a>
+          <button type="button" class="sr-print-btn" (click)="printPdf()">Print / PDF</button>
+        </div>
+      </header>
+
+      <section class="sr-paper">
+        <h1 class="sr-title">Student Report Card</h1>
+
+        <div class="sr-summary-grid">
+          <div><span>REGISTRATION</span><strong>{{ r.profile.admission_no || '-' }}</strong></div>
+          <div><span>NAME</span><strong>{{ r.profile.full_name || '-' }}</strong></div>
+          <div><span>CLASS</span><strong>{{ r.profile.class_name }}{{ r.profile.section ? ' ' + r.profile.section : '' }}</strong></div>
+          <div><span>DATE OF BIRTH</span><strong>{{ formatDob(r.profile.date_of_birth) }}</strong></div>
+          <div><span>GENDER</span><strong>-</strong></div>
+          <div><span>ADMISSION DATE</span><strong>{{ r.profile.date_of_admission || '-' }}</strong></div>
+          <div><span>ATTENDANCE</span><strong>{{ r.attendance.overall_percent }} %</strong></div>
+          <div><span>LEAVES</span><strong>{{ r.attendance.leaves_total }}</strong></div>
+          <div><span>ABSENTS</span><strong>{{ r.attendance.absents_total }}</strong></div>
+        </div>
+
+        <section class="sr-block">
+          <h2>COGNITIVE DOMAIN - EXAMINATION</h2>
+          <table class="sr-table">
+            <thead>
+              <tr>
+                <th>EXAMINATIONS</th>
+                <th>OBTAINED</th>
+                <th>TOTAL</th>
+                <th>PERCENTAGE</th>
+                <th>GRADE</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>OVER ALL PERFORMANCE</td>
+                <td>{{ testTotals(r).obtained }}</td>
+                <td>{{ testTotals(r).total }}</td>
+                <td>{{ testTotals(r).percent }}%</td>
+                <td>{{ gradeFromPercent(testTotals(r).percent) }}</td>
+                <td>{{ statusFromPercent(testTotals(r).percent) }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="sr-subhead">SUBJECT WISE PERFORMANCE</p>
+          <table class="sr-table">
+            <thead>
+              <tr>
+                <th>SUBJECT</th>
+                <th>OBTAINED MARKS</th>
+                <th>TOTAL MARKS</th>
+                <th>PERCENTAGE</th>
+                <th>GRADE</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sub of r.class_tests; track sub.subject) {
+                <tr>
+                  <td>{{ sub.subject }}</td>
+                  <td>{{ sub.obtained_marks }}</td>
+                  <td>{{ sub.total_marks }}</td>
+                  <td>{{ sub.percent }}%</td>
+                  <td>{{ gradeFromPercent(sub.percent) }}</td>
+                  <td>{{ statusFromPercent(sub.percent) }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td>-</td>
+                  <td>0</td>
+                  <td>0</td>
+                  <td>0%</td>
+                  <td>F</td>
+                  <td>FAIL</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="sr-kpi-grid">
+            <div><span>CLASS STRENGTH</span><strong>1 STUDENT</strong></div>
+            <div><span>CLASS AVERAGE</span><strong>{{ testTotals(r).percent }}%</strong></div>
+            <div><span>CLASS MAX AVERAGE</span><strong>{{ testTotals(r).percent }}%</strong></div>
+            <div><span>CLASS MIN AVERAGE</span><strong>{{ testTotals(r).percent }}%</strong></div>
+            <div><span>STUDENT POSITION</span><strong>1st out of 1</strong></div>
+          </div>
+        </section>
+
+        <section class="sr-block">
+          <h2>COGNITIVE DOMAIN - CLASS TESTS</h2>
+          <table class="sr-table">
+            <thead>
+              <tr>
+                <th>SUBJECTS</th>
+                <th>TOTAL TESTS</th>
+                <th>OBTAINED</th>
+                <th>TOTAL</th>
+                <th>SCORE</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sub of r.class_tests; track sub.subject) {
+                <tr>
+                  <td>{{ sub.subject }}</td>
+                  <td>{{ sub.total_tests }}</td>
+                  <td>{{ sub.obtained_marks }}</td>
+                  <td>{{ sub.total_marks }}</td>
+                  <td>{{ sub.percent }}%</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td>-</td>
+                  <td>0</td>
+                  <td>0</td>
+                  <td>0</td>
+                  <td>0%</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>OVERALL TESTS</th>
+                <th>{{ testTotals(r).tests }}</th>
+                <th>{{ testTotals(r).obtained }}</th>
+                <th>{{ testTotals(r).total }}</th>
+                <th>{{ testTotals(r).percent }}%</th>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
+        <div class="sr-dual">
+          <section class="sr-block">
+            <h2>AFFECTIVE DOMAINS</h2>
+            <p>OVERALL RATING</p>
+            <p class="sr-rating">{{ starText(overallScorePercent(r)) }} ({{ overallScorePercent(r) }}%)</p>
+          </section>
+          <section class="sr-block">
+            <h2>PSYCOMOTOR DOMAINS</h2>
+            <p>OVERALL RATING</p>
+            <p class="sr-rating">{{ starText(overallScorePercent(r)) }} ({{ overallScorePercent(r) }}%)</p>
+          </section>
+        </div>
+
+        <section class="sr-block">
+          <h2>COMMENTS / OBSERVATIONS</h2>
+          <div class="sr-comments-grid">
+            <div><span>TOTAL TESTS</span><strong>{{ testTotals(r).tests }}</strong></div>
+            <div><span>TOTAL MARKS</span><strong>{{ testTotals(r).total }}</strong></div>
+            <div><span>OBTAINED</span><strong>{{ testTotals(r).obtained }}</strong></div>
+            <div><span>AVERAGE</span><strong>{{ testTotals(r).percent }}%</strong></div>
+            <div><span>OVERALL SCORE</span><strong>{{ overallScorePercent(r) }}%</strong></div>
+          </div>
+          <p class="sr-note">{{ r.examinations.message || 'Keep improving consistently.' }}</p>
+        </section>
+
+        <footer class="sr-footer">
+          <span>DATE: {{ todayLabel() }}</span>
+          <span>SIGNATURE</span>
+          <span>STAMP</span>
+        </footer>
+      </section>
+    </div>
+  } @else {
+    <p class="sr-load-err no-print">Could not load this student report. <a routerLink="/students/admission">Back to admission</a></p>
+  }
+} @else {
+  <p class="sr-loading no-print">Loading...</p>
+}

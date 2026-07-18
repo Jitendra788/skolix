@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+@import 'quill/dist/quill.core.css';
+@import 'quill/dist/quill.snow.css';
+
+/**
+ * Theme: Light shell + indigo accents; sidebar uses warm active state.
+ */
+:root {
+  --font-sans: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --bg-root: #f4f6f8;
+  --bg-subtle: #e2e8f0;
+  --bg-muted: #f8fafc;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-2: #6366f1;
+  --accent-3: #818cf8;
+  --accent-soft: rgba(79, 70, 229, 0.14);
+  --accent-muted: rgba(79, 70, 229, 0.08);
+  --ring: rgba(79, 70, 229, 0.35);
+
+  --success: #059669;
+  --danger: #dc2626;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 20px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 12px 48px rgba(15, 23, 42, 0.1);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --shell-sidebar-width: 272px;
+  --topbar-height: 60px;
+
+  /* Light sidebar (reference: white panel, orange–red active row) */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e8eaed;
+  --sidebar-fg: #4b5563;
+  --sidebar-fg-muted: #9ca3af;
+  --sidebar-hover-bg: #f3f4f6;
+  --sidebar-active-gradient: linear-gradient(135deg, #fb923c 0%, #f97316 42%, #ef4444 100%);
+  --sidebar-active-fg: #ffffff;
+  --sidebar-sublink-active-bg: #fff7ed;
+  --sidebar-sublink-active-fg: #9a3412;
+  --sidebar-sublink-active-border: #fb923c;
+
+  --topbar-bg: #ffffff;
+
+  /* Dashboard stat cards (harmonised with theme) */
+  --gradient-stat-1: linear-gradient(135deg, #312e81 0%, #4f46e5 100%);
+  --gradient-stat-2: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+  --gradient-stat-3: linear-gradient(135deg, #be185d 0%, #e11d48 100%);
+  --gradient-stat-4: linear-gradient(135deg, #0369a1 0%, #4f46e5 100%);
+  --welcome-banner: linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #f1f5f9 100%);
+
+  /* Institute / forms — semantic */
+  --label-required: #4338ca;
+  --label-optional: #64748b;
+  --pill-required-bg: #eef2ff;
+  --pill-required-text: #3730a3;
+  --pill-optional-bg: #f1f5f9;
+  --pill-optional-text: #475569;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg-root);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global control focus — used by .input in feature SCSS */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Student report: print / save as PDF — hide chrome, show report only */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .student-report-page,
+  .student-report-page * {
+    visibility: visible;
+  }
+
+  .student-report-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    padding: 0 0.5cm;
+  }
+
+  .esk-layout,
+  .esk-main-column,
+  .esk-content {
+    all: unset;
+    display: block !important;
+    width: 100% !important;
+  }
+}

@@ -1,0 +1,282 @@
+<div class="student-dashboard-shell">
+  <div class="student-dash-body">
+    <header class="student-dash-top">
+      <h1 class="student-dash-greet">👋 Hello {{ firstName() }}!</h1>
+      <p class="student-dash-crumb">Home / Dashboard</p>
+    </header>
+
+    <section class="student-dash-stats" aria-label="Summary">
+      <a routerLink="/student/homework" class="dash-stat dash-stat-link dash-stat-peach">
+        <div class="dash-stat-text">
+          <p class="dash-stat-label">Homework</p>
+          <p class="dash-stat-value">{{ loading ? '…' : homeworkStatLine() }}</p>
+          <p class="dash-stat-hint">Today / class total</p>
+        </div>
+        <span class="dash-stat-ico" aria-hidden="true">📚</span>
+      </a>
+      <a routerLink="/student/profile" class="dash-stat dash-stat-link dash-stat-sky">
+        <div class="dash-stat-text">
+          <p class="dash-stat-label">Attendance</p>
+          <p class="dash-stat-value">{{ loading ? '…' : attendancePercentDisplay() }}</p>
+          <p class="dash-stat-hint">Overall</p>
+        </div>
+        <span class="dash-stat-ico" aria-hidden="true">🎒</span>
+      </a>
+      <a routerLink="/student/profile" class="dash-stat dash-stat-link dash-stat-mint">
+        <div class="dash-stat-text">
+          <p class="dash-stat-label">Class tests</p>
+          <p class="dash-stat-value">{{ loading ? '…' : marksLine() }}</p>
+          <p class="dash-stat-hint">Marks obtained / total</p>
+        </div>
+        <span class="dash-stat-ico" aria-hidden="true">🎓</span>
+      </a>
+      <a routerLink="/student/notices" class="dash-stat dash-stat-link dash-stat-white">
+        <div class="dash-stat-text">
+          <p class="dash-stat-label">Notices</p>
+          <p class="dash-stat-value">{{ loading ? '…' : totalNotices }}</p>
+          <p class="dash-stat-hint">School updates</p>
+        </div>
+        <span class="dash-stat-ico" aria-hidden="true">🏆</span>
+      </a>
+    </section>
+
+    <article class="dash-card dash-mini-charts">
+      <h2 class="dash-card-title">
+        <span class="dash-title-ico" aria-hidden="true">📊</span>
+        Quick overview
+      </h2>
+      <div class="dash-bar-block">
+        <div class="dash-bar-label">
+          <span>Attendance</span>
+          <span class="dash-bar-val">{{ attendancePercentDisplay() }}</span>
+        </div>
+        <div class="dash-bar-track">
+          <div class="dash-bar-fill dash-bar-att" [style.width.%]="attBarWidth()"></div>
+        </div>
+      </div>
+      <div class="dash-bar-block">
+        <div class="dash-bar-label">
+          <span>Avg. class test %</span>
+          <span class="dash-bar-val">{{ testsBarLabel() }}</span>
+        </div>
+        <div class="dash-bar-track">
+          <div class="dash-bar-fill dash-bar-test" [style.width.%]="testsBarWidth()"></div>
+        </div>
+      </div>
+    </article>
+
+    <div class="student-dash-columns">
+      <div class="student-dash-maincol">
+        <article class="dash-card dash-card-ongoing">
+          <h2 class="dash-card-title">
+            <span class="dash-title-ico" aria-hidden="true">📹</span>
+            Today’s focus
+          </h2>
+          @if (focusHomework(); as hw) {
+            <div class="dash-ongoing-inner">
+              <a routerLink="/student/homework" class="dash-ongoing-mainlink">
+                <div class="dash-ongoing-thumb" aria-hidden="true">▶</div>
+                <div class="dash-ongoing-detail">
+                  <span class="dash-tag dash-tag-subj">{{ hw.subject }}</span>
+                  <p class="dash-ongoing-topic">{{ homeworkPreview(hw.description, 64) || hw.subject }}</p>
+                  <p class="dash-ongoing-meta">
+                    <span>👩‍🏫 {{ hw.teacher || 'Teacher' }}</span>
+                    <span class="dash-hw-due">Due {{ formatHomeworkDate(hw.date) }}</span>
+                  </p>
+                  <span class="dash-hw-status" [ngClass]="hwStatusClass(hw)">{{ hwStatusLabel(hw) }}</span>
+                </div>
+              </a>
+              <div class="dash-ongoing-actions">
+                <a routerLink="/student/homework" class="dash-btn dash-btn-primary">Open homework</a>
+                <a routerLink="/student/timetable" class="dash-btn dash-btn-ghost">Timetable</a>
+              </div>
+            </div>
+          } @else {
+            <div class="dash-empty-block">
+              <span class="dash-tag dash-tag-muted">No task</span>
+              <p class="dash-empty-title">No homework for today</p>
+              <p class="dash-empty-sub">Due: — · Subject: — · <span class="dash-hw-status dash-hw-pending">Pending</span></p>
+              <div class="dash-ongoing-actions">
+                <a routerLink="/student/homework" class="dash-btn dash-btn-primary">View homework</a>
+              </div>
+            </div>
+          }
+        </article>
+
+        <div class="student-dash-split">
+          <article class="dash-card dash-card-table">
+            <h2 class="dash-card-title">
+              <span class="dash-title-ico" aria-hidden="true">📋</span>
+              Upcoming homework
+            </h2>
+            @if (calSelectedDay != null) {
+              <p class="dash-cal-filter-hint">
+                Showing {{ calendarTitle() }} · day {{ calSelectedDay }}
+                <button type="button" class="dash-cal-clear" (click)="calSelectedDay = null">Clear</button>
+              </p>
+            }
+            @if (filteredUpcomingHomework().length) {
+              <div class="dash-table-wrap">
+                <table class="dash-table">
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Due</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (h of filteredUpcomingHomework(); track h.id) {
+                      <tr [class.dash-tr-overdue]="hwDueStatus(h) === 'overdue'" [class.dash-tr-done]="hwDueStatus(h) === 'completed'">
+                        <td>
+                          <a routerLink="/student/homework" class="dash-table-subj">
+                            <span class="dash-tag dash-tag-subj">{{ h.subject }}</span>
+                          </a>
+                        </td>
+                        <td>{{ formatHomeworkDate(h.date) }}</td>
+                        <td>
+                          <span class="dash-hw-status" [ngClass]="hwStatusClass(h)">{{ hwStatusLabel(h) }}</span>
+                        </td>
+                        <td>
+                          <button type="button" class="dash-hw-toggle" (click)="toggleHwDone(h.id, $event)">
+                            {{ hwDone(h.id) ? 'Undo' : 'Done' }}
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <div class="dash-hw-empty-cards">
+                <div class="dash-hw-placeholder">
+                  <span class="dash-tag dash-tag-muted">—</span>
+                  <p class="dash-empty-title">No homework here</p>
+                  <p><span class="dash-hw-due">Due: —</span></p>
+                  <p><span class="dash-hw-status dash-hw-pending">Pending</span> · Pick another date or open full list.</p>
+                  <a routerLink="/student/homework" class="dash-link">Go to homework</a>
+                </div>
+              </div>
+            }
+          </article>
+
+          <article class="dash-card dash-card-table">
+            <h2 class="dash-card-title">
+              <span class="dash-title-ico" aria-hidden="true">👑</span>
+              Subject performance
+            </h2>
+            @if (performanceRows.length) {
+              <div class="dash-table-wrap">
+                <table class="dash-table">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Subject</th>
+                      <th>Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of performanceRows; track row.rank + row.subject) {
+                      <tr [class.dash-row-highlight]="row.rank === 1">
+                        <td>{{ row.rank }}</td>
+                        <td>{{ row.subject }}</td>
+                        <td>{{ row.score }} ({{ row.percent | number : '1.0-0' }}%)</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="dash-empty">Class test scores will show here when your school records them.</p>
+            }
+          </article>
+        </div>
+
+        <article class="dash-card dash-card-timetable" id="student-timetable">
+          <div class="dash-card-head">
+            <h2 class="dash-card-title">
+              <span class="dash-title-ico" aria-hidden="true">🗓️</span>
+              Weekly timetable
+            </h2>
+            <a routerLink="/student/timetable" class="dash-link">Full view</a>
+          </div>
+          <p class="dash-timetable-hint">
+            Same schedule as <strong>Admin → Timetable</strong> on this browser.
+          </p>
+          <app-student-timetable-grid
+            [days]="ttDays"
+            [periods]="ttPeriods"
+            [cells]="ttCells"
+            [classLabel]="ttLabel"
+            [noClassMatch]="ttNoMatch"
+            [lightTheme]="true"
+          />
+        </article>
+      </div>
+
+      <aside class="student-dash-sidecol">
+        <article class="dash-card dash-card-cal">
+          <div class="dash-cal-head">
+            <button type="button" class="dash-cal-nav" (click)="prevCalMonth()" aria-label="Previous month">‹</button>
+            <h2 class="dash-cal-title">{{ calendarTitle() }}</h2>
+            <button type="button" class="dash-cal-nav" (click)="nextCalMonth()" aria-label="Next month">›</button>
+          </div>
+          <p class="dash-cal-tip">Tap a day to filter upcoming homework.</p>
+          <div class="dash-cal-weekdays">
+            @for (w of calendarWeekdayLabels(); track w) {
+              <span>{{ w }}</span>
+            }
+          </div>
+          <div class="dash-cal-grid">
+            @for (row of calendarMatrix(); track $index) {
+              <div class="dash-cal-row">
+                @for (cell of row; track $index) {
+                  @if (cell) {
+                    <button
+                      type="button"
+                      class="dash-cal-day"
+                      [class.dash-cal-today]="cell.isToday"
+                      [class.dash-cal-selected]="calDayIsSelected(cell.day)"
+                      (click)="selectCalDay(cell.day)"
+                    >
+                      {{ cell.day }}
+                    </button>
+                  } @else {
+                    <span class="dash-cal-day dash-cal-pad"></span>
+                  }
+                }
+              </div>
+            }
+          </div>
+          <p class="dash-cal-foot">{{ todayLabel() }}</p>
+        </article>
+
+        <article class="dash-card dash-card-announce">
+          <div class="dash-card-head">
+            <h2 class="dash-card-title">Announcement</h2>
+            <a routerLink="/student/notices" class="dash-link">View all</a>
+          </div>
+          @if (latestNotices.length) {
+            <ul class="dash-announce-list">
+              @for (n of latestNotices; track n.id) {
+                <li class="dash-announce-item">
+                  <div class="dash-announce-top">
+                    <span class="dash-announce-date">{{ formatNoticeDate(n.created_at) }}</span>
+                    <a routerLink="/student/notices" class="dash-link-sm">View</a>
+                  </div>
+                  <p class="dash-announce-title">{{ n.title }}</p>
+                  @if (n.body) {
+                    <p class="dash-announce-body">{{ truncate(n.body, 90) }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="dash-empty">No announcements yet.</p>
+          }
+        </article>
+      </aside>
+    </div>
+  </div>
+</div>

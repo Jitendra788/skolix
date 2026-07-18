@@ -1,0 +1,407 @@
+<section class="hw-page" [class.hw-page-student]="isStudentView">
+  <header class="hw-head" [class.hw-head-student]="isStudentView">
+    <div>
+      <h1>Homework</h1>
+      <p class="hw-breadcrumb">
+        @if (isStudentView) {
+          Assignments for <strong>{{ filters.class || 'your class' }}</strong>
+        } @else {
+          Home > Homeworks
+        }
+      </p>
+    </div>
+    @if (showAddHomework) {
+      <a class="btn-add" [routerLink]="addHomeworkLink()">+ Add Homework</a>
+    }
+  </header>
+
+  @if (isStudentView && studentProfileError) {
+    <p class="hw-student-err">
+      Your class could not be loaded. Please contact the school or try logging in again.
+    </p>
+  }
+
+  @if (isStudentView && !studentProfileError) {
+    <section class="hw-filters hw-filters-student">
+      <label class="hw-field">
+        <span class="hw-chip">Date</span>
+        <div class="hw-control">
+          <span class="hw-icon-left" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </span>
+          <input
+            type="date"
+            class="hw-input hw-date"
+            [(ngModel)]="filters.date"
+            (ngModelChange)="onStudentDateChange()"
+          />
+        </div>
+      </label>
+      <div class="hw-student-class-pill">
+        <span class="hw-student-class-label">Class</span>
+        <strong>{{ filters.class || '…' }}</strong>
+      </div>
+      <button
+        type="button"
+        class="hw-search-btn"
+        [disabled]="isFilterInvalid() || loading || studentWaitingClass"
+        (click)="loadHomework()"
+      >
+        @if (loading) {
+          <span class="hw-spinner hw-spinner-sm" aria-hidden="true"></span>
+          Loading…
+        } @else {
+          Refresh
+        }
+      </button>
+    </section>
+  } @else {
+    <section class="hw-filters">
+      <label class="hw-field">
+        <span class="hw-chip">Homework Date*</span>
+        <div class="hw-control">
+          <span class="hw-icon-left" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </span>
+          <input type="date" class="hw-input hw-date" [(ngModel)]="filters.date" />
+        </div>
+        @if (filterHasErr('date')) {
+          <small class="hw-field-err">Homework date is required.</small>
+        }
+      </label>
+
+      <label class="hw-field">
+        <span class="hw-chip">Class*</span>
+        <div class="hw-control">
+          <select class="hw-input hw-select" [(ngModel)]="filters.class">
+            <option value="">Select class</option>
+            @for (row of classes; track row.id) {
+              <option [value]="row.name">{{ row.name }}</option>
+            }
+          </select>
+          <span class="hw-icon-right" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
+        </div>
+        @if (filterHasErr('class')) {
+          <small class="hw-field-err">Class is required.</small>
+        }
+      </label>
+
+      @if (isTeacherView) {
+        <div class="hw-field hw-teacher-self-field">
+          <span class="hw-chip">Teacher</span>
+          <div class="hw-control hw-teacher-self-pill">{{ filters.teacher || '—' }}</div>
+        </div>
+      } @else {
+        <label class="hw-field">
+          <span class="hw-chip">Teacher</span>
+          <div class="hw-control">
+            <select class="hw-input hw-select" [(ngModel)]="filters.teacher">
+              <option value="">All teachers</option>
+              @for (t of teachers; track t.id) {
+                <option [value]="t.name">{{ t.name }}</option>
+              }
+            </select>
+            <span class="hw-icon-right" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
+        </label>
+      }
+
+      <button
+        type="button"
+        class="hw-search-btn"
+        [disabled]="isFilterInvalid() || loading"
+        (click)="loadHomework()"
+      >
+        @if (loading) {
+          <span class="hw-spinner hw-spinner-sm" aria-hidden="true"></span>
+          Loading…
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+          </svg>
+          Load homework
+        }
+      </button>
+    </section>
+  }
+
+  @if (!(isStudentView && studentProfileError)) {
+  <section class="hw-result">
+    @if (mutationError) {
+      <p class="hw-err">{{ mutationError }}</p>
+    }
+    @if (loadError) {
+      <p class="hw-err">Could not load homework. <button type="button" class="hw-retry-link" (click)="loadHomework()">Retry</button></p>
+    }
+    @if (isStudentView && studentWaitingClass) {
+      <div class="hw-empty hw-loading">
+        <span class="hw-spinner" aria-hidden="true"></span>
+        <span>Loading your class…</span>
+      </div>
+    } @else if (loading) {
+      <div class="hw-empty hw-loading">
+        <span class="hw-spinner" aria-hidden="true"></span>
+        <span>Loading homework…</span>
+      </div>
+    } @else if (!loadError && homeworks.length === 0) {
+      <div class="hw-empty">
+        @if (isStudentView) {
+          <span>No homework for <strong>{{ filters.date }}</strong>. Try another date.</span>
+        } @else if (isFilterInvalid()) {
+          <span>Choose <strong>date</strong> and <strong>class</strong>, then load homework.</span>
+        } @else if (!hasAttemptedLoad) {
+          <span>Select <strong>date</strong> and <strong>class</strong>, then press <strong>Load homework</strong>.</span>
+        } @else {
+          <span>No homework found for these filters.</span>
+        }
+      </div>
+    } @else {
+      <div class="hw-cards">
+        @for (hw of homeworks; track hw.id) {
+          <article
+            class="hw-card"
+            [class.hw-card-student]="isStudentView"
+            [class.hw-card-student-overdue]="isStudentView && hwDueStatus(hw) === 'overdue'"
+            [class.hw-card-student-done]="isStudentView && hwDueStatus(hw) === 'completed'"
+          >
+            @if (isStudentView) {
+              <div class="hw-student-status-row">
+                @if (hw.subject) {
+                  <span class="hw-student-tag-subj">{{ hw.subject }}</span>
+                }
+                <span class="hw-student-due">Due {{ hw.date | date: 'mediumDate' }}</span>
+                <span class="hw-student-status" [ngClass]="hwStatusClass(hw)">{{ hwStatusLabel(hw) }}</span>
+                <button type="button" class="hw-student-toggle" (click)="toggleHwDone(hw.id, $event)">
+                  @if (hwDone(hw.id)) {
+                    Undo
+                  } @else {
+                    Mark done
+                  }
+                </button>
+              </div>
+            }
+            @if (!isStudentView) {
+              <div class="hw-actions">
+                <button type="button" class="icon-btn edit" title="Edit" aria-label="Edit homework" (click)="startEdit(hw)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
+                    <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </button>
+                <button type="button" class="icon-btn del" title="Delete" aria-label="Delete homework" (click)="requestDelete(hw)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
+              </div>
+            }
+
+            <div class="hw-meta-grid">
+              <section class="meta teacher">
+                <span class="meta-k">Teacher</span>
+                <strong class="meta-v">{{ hw.teacher }}</strong>
+              </section>
+              <section class="meta class">
+                <span class="meta-k">Class</span>
+                <strong class="meta-v">{{ hw.class }}</strong>
+              </section>
+              <section class="meta date">
+                <span class="meta-k">{{ hw.date | date: 'EEEE' }}</span>
+                <strong class="meta-big">{{ hw.date | date: 'dd' }}</strong>
+                <span class="meta-sub">{{ hw.date | date: 'MMMM, yyyy' }}</span>
+              </section>
+              <section class="meta subject">
+                <span class="meta-k">Subject</span>
+                <strong class="meta-v">{{ hw.subject || '-' }}</strong>
+              </section>
+            </div>
+
+            @if (hw.due_date || (hw.marks && hw.marks.trim())) {
+              <div class="hw-extra-meta">
+                @if (hw.due_date) {
+                  <span class="hw-pill hw-pill-due">
+                    Due {{ hw.due_date | date: 'mediumDate' }}
+                  </span>
+                }
+                @if (hw.marks && hw.marks.trim()) {
+                  <span class="hw-pill hw-pill-marks">Marks: {{ hw.marks }}</span>
+                }
+              </div>
+            }
+
+            <div class="hw-assignment">
+              <h3>Assignment</h3>
+              <app-homework-description-view
+                [description]="hw.description || ''"
+                [compact]="isStudentView"
+                class="hw-desc-block"
+              />
+              @if (hw.attachment_name) {
+                <div class="hw-attachment">
+                  <span class="hw-attachment-label">Attachment</span>
+                  <span class="hw-attachment-chip" [title]="hw.attachment_name">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                    </svg>
+                    {{ hw.attachment_name }}
+                  </span>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+  }
+
+  @if (!isStudentView && editingId !== null) {
+    <section class="hw-modal-backdrop">
+      <div class="hw-modal">
+        <h3>Edit Homework</h3>
+        <div class="hw-edit-grid">
+          <label>
+            <span>Date</span>
+            <input type="date" class="hw-input" [(ngModel)]="editDraft.date" />
+            @if (editHasErr('date')) {
+              <small class="hw-field-err">Date is required.</small>
+            }
+          </label>
+          <label>
+            <span>Class</span>
+            <select class="hw-input hw-select" [(ngModel)]="editDraft.class">
+              <option value="">Select Class</option>
+              @for (row of classes; track row.id) {
+                <option [value]="row.name">{{ row.name }}</option>
+              }
+            </select>
+            @if (editHasErr('class')) {
+              <small class="hw-field-err">Class is required.</small>
+            }
+          </label>
+          <label>
+            <span>Teacher</span>
+            <select class="hw-input hw-select" [(ngModel)]="editDraft.teacher">
+              <option value="">Select Teacher</option>
+              @for (t of teachers; track t.id) {
+                <option [value]="t.name">{{ t.name }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Subject</span>
+            <input type="text" class="hw-input" [(ngModel)]="editDraft.subject" />
+          </label>
+          <label>
+            <span>Due date</span>
+            <input type="date" class="hw-input" [(ngModel)]="editDraft.due_date" />
+          </label>
+          <label>
+            <span>Marks</span>
+            <input type="text" class="hw-input" [(ngModel)]="editDraft.marks" placeholder="Optional" />
+          </label>
+          <label class="span-2 hw-edit-desc-label">
+            <span>Description (JSON / text / HTML)</span>
+            <textarea class="hw-input hw-textarea" rows="8" [(ngModel)]="editDraft.description"></textarea>
+          </label>
+          <label class="span-2">
+            <span>Attachment</span>
+            <div class="hw-control">
+              <div class="hw-upload-shell">
+                <input
+                  #editFileInput
+                  type="file"
+                  class="hw-file-native"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
+                  (change)="onEditAttachmentChange($event, editFileInput)"
+                />
+                <button type="button" class="hw-upload-btn" (click)="triggerEditAttachmentPicker(editFileInput)">
+                  Choose File
+                </button>
+                <span class="hw-upload-name" [title]="editDraft.attachment_name || 'No file chosen'">
+                  {{ editDraft.attachment_name || 'No file chosen' }}
+                </span>
+                @if (editDraft.attachment_name) {
+                  <button type="button" class="hw-upload-clear" (click)="clearEditAttachment(editFileInput)" aria-label="Remove file">
+                    ×
+                  </button>
+                }
+              </div>
+            </div>
+            @if (editAttachmentError) {
+              <small class="hw-field-err">{{ editAttachmentError }}</small>
+            }
+            @if (editDraft.attachment_name && !editAttachmentError) {
+              <small class="hw-file-hint hw-file-selected">Selected file: {{ editDraft.attachment_name }}</small>
+            } @else {
+              <small class="hw-file-hint">Optional · PDF, Word, JPG, PNG</small>
+            }
+          </label>
+        </div>
+        <div class="hw-modal-actions">
+          <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="savingEdit || isEditInvalid()"
+            (click)="saveEdit()"
+          >
+            @if (savingEdit) {
+              <span class="hw-spinner hw-spinner-sm hw-spinner-inline" aria-hidden="true"></span>
+              Saving…
+            } @else {
+              Update Homework
+            }
+          </button>
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (!isStudentView && pendingDelete) {
+    <section class="hw-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="hw-del-title">
+      <div class="hw-modal hw-modal-sm">
+        <h3 id="hw-del-title">Delete homework?</h3>
+        <p class="hw-del-msg">
+          This will remove the assignment for <strong>{{ pendingDelete.class }}</strong>
+          @if (pendingDelete.teacher) {
+            <span> ({{ pendingDelete.teacher }})</span>
+          }
+          .
+        </p>
+        <div class="hw-modal-actions">
+          <button type="button" class="btn-secondary" [disabled]="deleting" (click)="cancelDelete()">Cancel</button>
+          <button type="button" class="btn-danger" [disabled]="deleting" (click)="confirmDelete()">
+            @if (deleting) {
+              <span class="hw-spinner hw-spinner-sm hw-spinner-inline" aria-hidden="true"></span>
+              Deleting…
+            } @else {
+              Delete
+            }
+          </button>
+        </div>
+      </div>
+    </section>
+  }
+</section>
