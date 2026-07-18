@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiOrigin: 'https://odd-brooms-warn.loca.lt',
+  apiOrigin: 'https://isolated-southern-establishment-trainers.trycloudflare.com',
 };

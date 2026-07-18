@@ -1,1 +1,1 @@
-window.__SKOLIX_API_ORIGIN__ = 'https://odd-brooms-warn.loca.lt';
+window.__SKOLIX_API_ORIGIN__ = 'https://isolated-southern-establishment-trainers.trycloudflare.com';

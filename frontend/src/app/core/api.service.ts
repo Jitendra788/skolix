@@ -16,9 +16,13 @@ function resolveApiOrigin(): string {
   return (environment.apiOrigin || '').replace(/\/$/, '');
 }
 
-/** Backend origin from environment / runtime env.js */
-const API_ORIGIN = resolveApiOrigin();
-const API = `${API_ORIGIN}/api`;
+/** Resolve at request time so public/env.js always wins over build-time values. */
+function apiOrigin(): string {
+  return resolveApiOrigin();
+}
+function api(): string {
+  return `${resolveApiOrigin()}/api`;
+}
 
 export type AuthRole = 'admin' | 'teacher' | 'student';
 
@@ -651,7 +655,9 @@ export interface DashboardSummary {
 export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionService);
-  private readonly homeworkApi = `${API_ORIGIN}/homeworks`;
+  private get homeworkApi(): string {
+    return `${apiOrigin()}/homeworks`;
+  }
 
   private authHeaders(): { headers: HttpHeaders } {
     const t = this.session.token();
@@ -661,19 +667,19 @@ export class ApiService {
   }
 
   getDashboardSummary(): Observable<DashboardSummary> {
-    return this.http.get<DashboardSummary>(`${API}/dashboard/summary`);
+    return this.http.get<DashboardSummary>(`${api()}/dashboard/summary`);
   }
 
   health(): Observable<{ status: string }> {
-    return this.http.get<{ status: string }>(`${API}/health`);
+    return this.http.get<{ status: string }>(`${api()}/health`);
   }
 
   login(body: AuthLoginRequest): Observable<AuthLoginResponse> {
-    return this.http.post<AuthLoginResponse>(`${API}/auth/login`, body);
+    return this.http.post<AuthLoginResponse>(`${api()}/auth/login`, body);
   }
 
   me(token: string): Observable<AuthMeResponse> {
-    return this.http.get<AuthMeResponse>(`${API}/auth/me`, {
+    return this.http.get<AuthMeResponse>(`${api()}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   }
@@ -709,7 +715,7 @@ export class ApiService {
   }
 
   getFaculty(id: number): Observable<Faculty> {
-    return this.http.get<Faculty>(`${API}/faculty/${id}`);
+    return this.http.get<Faculty>(`${api()}/faculty/${id}`);
   }
 
   listFaculty(params?: { q?: string; skip?: number; limit?: number }): Observable<Faculty[]> {
@@ -718,30 +724,30 @@ export class ApiService {
     if (qv) p = p.set('q', qv);
     if (params?.skip != null) p = p.set('skip', String(params.skip));
     if (params?.limit != null) p = p.set('limit', String(params.limit));
-    return this.http.get<Faculty[]>(`${API}/faculty`, { params: p });
+    return this.http.get<Faculty[]>(`${api()}/faculty`, { params: p });
   }
 
   createFaculty(body: FacultyPayload): Observable<Faculty> {
-    return this.http.post<Faculty>(`${API}/faculty`, body);
+    return this.http.post<Faculty>(`${api()}/faculty`, body);
   }
 
   updateFaculty(id: number, body: FacultyPayload): Observable<Faculty> {
-    return this.http.put<Faculty>(`${API}/faculty/${id}`, body);
+    return this.http.put<Faculty>(`${api()}/faculty/${id}`, body);
   }
 
   deleteFaculty(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/faculty/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/faculty/${id}`);
   }
 
   patchFacultyPortalLogin(
     id: number,
     body: FacultyPortalLoginPatch
   ): Observable<Faculty> {
-    return this.http.patch<Faculty>(`${API}/faculty/${id}/portal-login`, body);
+    return this.http.patch<Faculty>(`${api()}/faculty/${id}/portal-login`, body);
   }
 
   getCurrentAcademicYear(): Observable<CurrentAcademicYear> {
-    return this.http.get<CurrentAcademicYear>(`${API}/school/current-academic-year`);
+    return this.http.get<CurrentAcademicYear>(`${api()}/school/current-academic-year`);
   }
 
   /**
@@ -769,7 +775,7 @@ export class ApiService {
     if (qv) p = p.set('q', qv);
     if (opts.skip != null && opts.skip > 0) p = p.set('skip', String(opts.skip));
     if (opts.limit != null) p = p.set('limit', String(opts.limit));
-    return this.http.get<Student[]>(`${API}/students`, { params: p });
+    return this.http.get<Student[]>(`${api()}/students`, { params: p });
   }
 
   /** Paged roster with total count (All students screen). */
@@ -788,7 +794,7 @@ export class ApiService {
     const limit = opts.limit ?? 25;
     p = p.set('skip', String(skip));
     p = p.set('limit', String(limit));
-    return this.http.get<StudentListPage>(`${API}/students/page`, { params: p });
+    return this.http.get<StudentListPage>(`${api()}/students/page`, { params: p });
   }
 
   /** Paged list for Student login admin (search + accurate total). */
@@ -802,23 +808,23 @@ export class ApiService {
       .set('limit', String(params.limit));
     const qv = (params.q || '').trim();
     if (qv) p = p.set('q', qv);
-    return this.http.get<StudentListPage>(`${API}/students/portal-login/page`, {
+    return this.http.get<StudentListPage>(`${api()}/students/portal-login/page`, {
       params: p,
     });
   }
 
   getStudent(id: number): Observable<Student> {
-    return this.http.get<Student>(`${API}/students/${id}`);
+    return this.http.get<Student>(`${api()}/students/${id}`);
   }
 
   getLastAdmissionNumber(): Observable<StudentLastAdmission> {
-    return this.http.get<StudentLastAdmission>(`${API}/students/last-admission`);
+    return this.http.get<StudentLastAdmission>(`${api()}/students/last-admission`);
   }
 
   getStudentImportTemplate(
     format: 'csv' | 'xlsx',
   ): Observable<Blob> {
-    return this.http.get(`${API}/students/import-template`, {
+    return this.http.get(`${api()}/students/import-template`, {
       params: { format },
       responseType: 'blob',
     });
@@ -827,22 +833,22 @@ export class ApiService {
   bulkImportStudents(file: File): Observable<StudentBulkImportResult> {
     const fd = new FormData();
     fd.append('file', file);
-    return this.http.post<StudentBulkImportResult>(`${API}/students/import`, fd);
+    return this.http.post<StudentBulkImportResult>(`${api()}/students/import`, fd);
   }
 
   createStudent(body: StudentPayload): Observable<Student> {
-    return this.http.post<Student>(`${API}/students`, body);
+    return this.http.post<Student>(`${api()}/students`, body);
   }
 
   updateStudent(id: number, body: StudentPayload): Observable<Student> {
-    return this.http.put<Student>(`${API}/students/${id}`, body);
+    return this.http.put<Student>(`${api()}/students/${id}`, body);
   }
 
   patchStudentPortalLogin(
     id: number,
     body: StudentPortalLoginPatch
   ): Observable<Student> {
-    return this.http.patch<Student>(`${API}/students/${id}/portal-login`, body);
+    return this.http.patch<Student>(`${api()}/students/${id}/portal-login`, body);
   }
 
   patchStudentSelfProfile(
@@ -850,33 +856,33 @@ export class ApiService {
     body: StudentSelfProfilePatch
   ): Observable<Student> {
     return this.http.patch<Student>(
-      `${API}/students/${id}/self-profile`,
+      `${api()}/students/${id}/self-profile`,
       body,
       this.authHeaders()
     );
   }
 
   deleteStudent(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/students/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/students/${id}`);
   }
 
   getStudentReport(studentId: number): Observable<StudentReport> {
-    return this.http.get<StudentReport>(`${API}/students/${studentId}/report`);
+    return this.http.get<StudentReport>(`${api()}/students/${studentId}/report`);
   }
 
   listSchoolClasses(): Observable<SchoolClassRow[]> {
-    return this.http.get<SchoolClassRow[]>(`${API}/school/classes`);
+    return this.http.get<SchoolClassRow[]>(`${api()}/school/classes`);
   }
 
   createSchoolClass(body: SchoolClassPayload): Observable<SchoolClassRow> {
-    return this.http.post<SchoolClassRow>(`${API}/school/classes`, body);
+    return this.http.post<SchoolClassRow>(`${api()}/school/classes`, body);
   }
 
   updateSchoolClass(
     id: number,
     body: SchoolClassPayload
   ): Observable<SchoolClassRow> {
-    return this.http.put<SchoolClassRow>(`${API}/school/classes/${id}`, body);
+    return this.http.put<SchoolClassRow>(`${api()}/school/classes/${id}`, body);
   }
 
   putSchoolClassSections(
@@ -884,28 +890,28 @@ export class ApiService {
     body: SchoolClassSectionsPayload
   ): Observable<SchoolClassRow> {
     return this.http.put<SchoolClassRow>(
-      `${API}/school/classes/${classId}/sections`,
+      `${api()}/school/classes/${classId}/sections`,
       body
     );
   }
 
   deleteSchoolClass(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/school/classes/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/school/classes/${id}`);
   }
 
   /** `class_ids`: every class id exactly once, in desired order. */
   reorderSchoolClasses(classIds: number[]): Observable<SchoolClassRow[]> {
-    return this.http.put<SchoolClassRow[]>(`${API}/school/classes/reorder`, {
+    return this.http.put<SchoolClassRow[]>(`${api()}/school/classes/reorder`, {
       class_ids: classIds,
     });
   }
 
   listSubjectsByClassOverview(): Observable<ClassSubjectsOverviewRow[]> {
-    return this.http.get<ClassSubjectsOverviewRow[]>(`${API}/school/subjects/by-class`);
+    return this.http.get<ClassSubjectsOverviewRow[]>(`${api()}/school/subjects/by-class`);
   }
 
   listClassSubjects(classId: number): Observable<ClassSubjectRow[]> {
-    return this.http.get<ClassSubjectRow[]>(`${API}/school/classes/${classId}/subjects`);
+    return this.http.get<ClassSubjectRow[]>(`${api()}/school/classes/${classId}/subjects`);
   }
 
   putClassSubjects(
@@ -913,20 +919,20 @@ export class ApiService {
     body: ClassSubjectsPutPayload
   ): Observable<ClassSubjectRow[]> {
     return this.http.put<ClassSubjectRow[]>(
-      `${API}/school/classes/${classId}/subjects`,
+      `${api()}/school/classes/${classId}/subjects`,
       body
     );
   }
 
   listSchoolAcademicYears(): Observable<SchoolAcademicYearRow[]> {
-    return this.http.get<SchoolAcademicYearRow[]>(`${API}/school/academic-years`);
+    return this.http.get<SchoolAcademicYearRow[]>(`${api()}/school/academic-years`);
   }
 
   createSchoolAcademicYear(
     body: SchoolAcademicYearPayload
   ): Observable<SchoolAcademicYearRow> {
     return this.http.post<SchoolAcademicYearRow>(
-      `${API}/school/academic-years`,
+      `${api()}/school/academic-years`,
       body
     );
   }
@@ -936,21 +942,21 @@ export class ApiService {
     body: SchoolAcademicYearPayload
   ): Observable<SchoolAcademicYearRow> {
     return this.http.put<SchoolAcademicYearRow>(
-      `${API}/school/academic-years/${id}`,
+      `${api()}/school/academic-years/${id}`,
       body
     );
   }
 
   deleteSchoolAcademicYear(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/school/academic-years/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/school/academic-years/${id}`);
   }
 
   listSchoolFeeHeads(): Observable<SchoolFeeHeadRow[]> {
-    return this.http.get<SchoolFeeHeadRow[]>(`${API}/school/fee-heads`);
+    return this.http.get<SchoolFeeHeadRow[]>(`${api()}/school/fee-heads`);
   }
 
   listFeeParticulars(): Observable<SchoolFeeHeadRow[]> {
-    return this.http.get<SchoolFeeHeadRow[]>(`${API}/school/fee-particulars`);
+    return this.http.get<SchoolFeeHeadRow[]>(`${api()}/school/fee-particulars`);
   }
 
   getFeeParticularsSheet(params: {
@@ -965,49 +971,49 @@ export class ApiService {
       p = p.set('student_id', String(params.studentId));
     }
     if (params.academicYear) p = p.set('academic_year', params.academicYear);
-    return this.http.get<FeeParticularSheetRead>(`${API}/school/fee-particulars-sheet`, {
+    return this.http.get<FeeParticularSheetRead>(`${api()}/school/fee-particulars-sheet`, {
       params: p,
     });
   }
 
   saveFeeParticularsSheet(body: FeeParticularSheetWrite): Observable<FeeParticularSheetRead> {
-    return this.http.put<FeeParticularSheetRead>(`${API}/school/fee-particulars-sheet`, body);
+    return this.http.put<FeeParticularSheetRead>(`${api()}/school/fee-particulars-sheet`, body);
   }
 
   listFeeStructure(academicYear?: string): Observable<FeeStructureRead[]> {
     let p = new HttpParams();
     if (academicYear) p = p.set('academic_year', academicYear);
-    return this.http.get<FeeStructureRead[]>(`${API}/school/fee-structure`, { params: p });
+    return this.http.get<FeeStructureRead[]>(`${api()}/school/fee-structure`, { params: p });
   }
 
   saveFeeStructureBulk(body: FeeStructureBulkUpsert): Observable<FeeStructureRead[]> {
-    return this.http.put<FeeStructureRead[]>(`${API}/school/fee-structure`, body);
+    return this.http.put<FeeStructureRead[]>(`${api()}/school/fee-structure`, body);
   }
 
   createSchoolFeeHead(body: SchoolFeeHeadPayload): Observable<SchoolFeeHeadRow> {
-    return this.http.post<SchoolFeeHeadRow>(`${API}/school/fee-heads`, body);
+    return this.http.post<SchoolFeeHeadRow>(`${api()}/school/fee-heads`, body);
   }
 
   updateSchoolFeeHead(
     id: number,
     body: SchoolFeeHeadPayload
   ): Observable<SchoolFeeHeadRow> {
-    return this.http.put<SchoolFeeHeadRow>(`${API}/school/fee-heads/${id}`, body);
+    return this.http.put<SchoolFeeHeadRow>(`${api()}/school/fee-heads/${id}`, body);
   }
 
   deleteSchoolFeeHead(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/school/fee-heads/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/school/fee-heads/${id}`);
   }
 
   listSchoolFeeFrequencies(): Observable<SchoolFeeFrequencyRow[]> {
-    return this.http.get<SchoolFeeFrequencyRow[]>(`${API}/school/fee-frequencies`);
+    return this.http.get<SchoolFeeFrequencyRow[]>(`${api()}/school/fee-frequencies`);
   }
 
   createSchoolFeeFrequency(
     body: SchoolFeeFrequencyPayload
   ): Observable<SchoolFeeFrequencyRow> {
     return this.http.post<SchoolFeeFrequencyRow>(
-      `${API}/school/fee-frequencies`,
+      `${api()}/school/fee-frequencies`,
       body
     );
   }
@@ -1017,47 +1023,47 @@ export class ApiService {
     body: SchoolFeeFrequencyPayload
   ): Observable<SchoolFeeFrequencyRow> {
     return this.http.put<SchoolFeeFrequencyRow>(
-      `${API}/school/fee-frequencies/${id}`,
+      `${api()}/school/fee-frequencies/${id}`,
       body
     );
   }
 
   deleteSchoolFeeFrequency(id: number): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(
-      `${API}/school/fee-frequencies/${id}`
+      `${api()}/school/fee-frequencies/${id}`
     );
   }
 
   listNotices(): Observable<Notice[]> {
-    return this.http.get<Notice[]>(`${API}/notices`);
+    return this.http.get<Notice[]>(`${api()}/notices`);
   }
 
   createNotice(body: NoticePayload): Observable<Notice> {
-    return this.http.post<Notice>(`${API}/notices`, body);
+    return this.http.post<Notice>(`${api()}/notices`, body);
   }
 
   updateNotice(id: number, body: NoticePayload): Observable<Notice> {
-    return this.http.put<Notice>(`${API}/notices/${id}`, body);
+    return this.http.put<Notice>(`${api()}/notices/${id}`, body);
   }
 
   deleteNotice(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/notices/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/notices/${id}`);
   }
 
   listWhatsApp(className?: string): Observable<WhatsAppBroadcast[]> {
     let p = new HttpParams();
     if (className) p = p.set('class_name', className);
-    return this.http.get<WhatsAppBroadcast[]>(`${API}/whatsapp/broadcasts`, {
+    return this.http.get<WhatsAppBroadcast[]>(`${api()}/whatsapp/broadcasts`, {
       params: p,
     });
   }
 
   postWhatsApp(body: { class_name: string; message: string }): Observable<WhatsAppBroadcast> {
-    return this.http.post<WhatsAppBroadcast>(`${API}/whatsapp/broadcasts`, body);
+    return this.http.post<WhatsAppBroadcast>(`${api()}/whatsapp/broadcasts`, body);
   }
 
   postWhatsAppGroup(body: { class_name: string; message: string }): Observable<WhatsAppGroupSendResult> {
-    return this.http.post<WhatsAppGroupSendResult>(`${API}/whatsapp/broadcasts/group`, body);
+    return this.http.post<WhatsAppGroupSendResult>(`${api()}/whatsapp/broadcasts/group`, body);
   }
 
   postWhatsAppDueFees(body: {
@@ -1065,49 +1071,49 @@ export class ApiService {
     academic_year: string;
     message_template?: string;
   }): Observable<WhatsAppDueFeesSendResult> {
-    return this.http.post<WhatsAppDueFeesSendResult>(`${API}/whatsapp/broadcasts/due-fees`, body);
+    return this.http.post<WhatsAppDueFeesSendResult>(`${api()}/whatsapp/broadcasts/due-fees`, body);
   }
 
   postSms(body: { phone_number: string; message: string }): Observable<SmsSendResult> {
-    return this.http.post<SmsSendResult>(`${API}/whatsapp/sms/send`, body);
+    return this.http.post<SmsSendResult>(`${api()}/whatsapp/sms/send`, body);
   }
 
   deleteWhatsAppBroadcast(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/whatsapp/broadcasts/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/whatsapp/broadcasts/${id}`);
   }
 
   listPTM(className?: string): Observable<PTMUpdate[]> {
     let p = new HttpParams();
     if (className) p = p.set('class_name', className);
-    return this.http.get<PTMUpdate[]>(`${API}/ptm`, { params: p });
+    return this.http.get<PTMUpdate[]>(`${api()}/ptm`, { params: p });
   }
 
   createPTM(body: PTMPayload): Observable<PTMUpdate> {
-    return this.http.post<PTMUpdate>(`${API}/ptm`, body);
+    return this.http.post<PTMUpdate>(`${api()}/ptm`, body);
   }
 
   updatePTM(id: number, body: PTMPayload): Observable<PTMUpdate> {
-    return this.http.put<PTMUpdate>(`${API}/ptm/${id}`, body);
+    return this.http.put<PTMUpdate>(`${api()}/ptm/${id}`, body);
   }
 
   deletePTM(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/ptm/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/ptm/${id}`);
   }
 
   listGallery(): Observable<GalleryImage[]> {
-    return this.http.get<GalleryImage[]>(`${API}/gallery`);
+    return this.http.get<GalleryImage[]>(`${api()}/gallery`);
   }
 
   createGalleryImage(body: GalleryPayload): Observable<GalleryImage> {
-    return this.http.post<GalleryImage>(`${API}/gallery`, body);
+    return this.http.post<GalleryImage>(`${api()}/gallery`, body);
   }
 
   updateGalleryImage(id: number, body: GalleryPayload): Observable<GalleryImage> {
-    return this.http.put<GalleryImage>(`${API}/gallery/${id}`, body);
+    return this.http.put<GalleryImage>(`${api()}/gallery/${id}`, body);
   }
 
   deleteGalleryImage(id: number): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${API}/gallery/${id}`);
+    return this.http.delete<{ ok: boolean }>(`${api()}/gallery/${id}`);
   }
 
   listAttendance(params?: AttendanceListParams): Observable<AttendanceRecord[]> {
@@ -1123,7 +1129,7 @@ export class ApiService {
       if (params.academicYear) p = p.set('academic_year', params.academicYear);
       if (params.status) p = p.set('status', params.status);
     }
-    return this.http.get<AttendanceRecord[]>(`${API}/attendance`, {
+    return this.http.get<AttendanceRecord[]>(`${api()}/attendance`, {
       ...this.authHeaders(),
       params: p,
     });
@@ -1133,7 +1139,7 @@ export class ApiService {
     body: AttendanceUpsertDayPayload
   ): Observable<AttendanceRecord[]> {
     return this.http.post<AttendanceRecord[]>(
-      `${API}/attendance/upsert-day`,
+      `${api()}/attendance/upsert-day`,
       body,
       this.authHeaders()
     );
@@ -1141,7 +1147,7 @@ export class ApiService {
 
   createAttendance(body: AttendancePayload): Observable<AttendanceRecord> {
     return this.http.post<AttendanceRecord>(
-      `${API}/attendance`,
+      `${api()}/attendance`,
       body,
       this.authHeaders()
     );
@@ -1152,7 +1158,7 @@ export class ApiService {
     body: AttendancePayload
   ): Observable<AttendanceRecord> {
     return this.http.put<AttendanceRecord>(
-      `${API}/attendance/${id}`,
+      `${api()}/attendance/${id}`,
       body,
       this.authHeaders()
     );
@@ -1160,7 +1166,7 @@ export class ApiService {
 
   deleteAttendance(id: number): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(
-      `${API}/attendance/${id}`,
+      `${api()}/attendance/${id}`,
       this.authHeaders()
     );
   }
@@ -1169,23 +1175,23 @@ export class ApiService {
     let p = new HttpParams();
     if (dateFrom) p = p.set('date_from', dateFrom);
     if (dateTo) p = p.set('date_to', dateTo);
-    return this.http.get<SchoolHoliday[]>(`${API}/holidays`, { params: p });
+    return this.http.get<SchoolHoliday[]>(`${api()}/holidays`, { params: p });
   }
 
   listHolidaysInMonth(yearMonth: string): Observable<SchoolHoliday[]> {
     const p = new HttpParams().set('year_month', yearMonth);
-    return this.http.get<SchoolHoliday[]>(`${API}/holidays/in-month`, { params: p });
+    return this.http.get<SchoolHoliday[]>(`${api()}/holidays/in-month`, { params: p });
   }
 
   createHoliday(body: SchoolHolidayPayload): Observable<SchoolHoliday> {
-    return this.http.post<SchoolHoliday>(`${API}/holidays`, body, this.authHeaders());
+    return this.http.post<SchoolHoliday>(`${api()}/holidays`, body, this.authHeaders());
   }
 
   generateWeeklyHolidays(
     body: SchoolHolidayWeeklyPayload
   ): Observable<SchoolHoliday[]> {
     return this.http.post<SchoolHoliday[]>(
-      `${API}/holidays/generate-weekly`,
+      `${api()}/holidays/generate-weekly`,
       body,
       this.authHeaders()
     );
@@ -1196,7 +1202,7 @@ export class ApiService {
     body: SchoolHolidayPayload
   ): Observable<SchoolHoliday> {
     return this.http.put<SchoolHoliday>(
-      `${API}/holidays/${id}`,
+      `${api()}/holidays/${id}`,
       body,
       this.authHeaders()
     );
@@ -1204,19 +1210,19 @@ export class ApiService {
 
   deleteHoliday(id: number): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(
-      `${API}/holidays/${id}`,
+      `${api()}/holidays/${id}`,
       this.authHeaders()
     );
   }
 
   getInstituteProfile(): Observable<InstituteProfile> {
-    return this.http.get<InstituteProfile>(`${API}/institute-profile`);
+    return this.http.get<InstituteProfile>(`${api()}/institute-profile`);
   }
 
   updateInstituteProfile(
     body: InstituteProfilePayload
   ): Observable<InstituteProfile> {
-    return this.http.put<InstituteProfile>(`${API}/institute-profile`, body);
+    return this.http.put<InstituteProfile>(`${api()}/institute-profile`, body);
   }
 
   listStudentFees(params: {
@@ -1226,14 +1232,14 @@ export class ApiService {
     const p = new HttpParams()
       .set('class_name', params.className)
       .set('academic_year', params.academicYear);
-    return this.http.get<StudentFeeLedger[]>(`${API}/fees/student-fees`, { params: p });
+    return this.http.get<StudentFeeLedger[]>(`${api()}/fees/student-fees`, { params: p });
   }
 
   applyFeeStructureToClass(
     body: FeeApplyStructureToClassBody
   ): Observable<FeeApplyStructureToClassResult> {
     return this.http.post<FeeApplyStructureToClassResult>(
-      `${API}/fees/apply-structure-to-class`,
+      `${api()}/fees/apply-structure-to-class`,
       body
     );
   }
@@ -1243,7 +1249,7 @@ export class ApiService {
     body: FeeConcessionUpdatePayload
   ): Observable<StudentFeeLedger> {
     return this.http.put<StudentFeeLedger>(
-      `${API}/fees/student-fees/${studentFeeId}/concession`,
+      `${api()}/fees/student-fees/${studentFeeId}/concession`,
       body
     );
   }
@@ -1253,7 +1259,7 @@ export class ApiService {
     body: FeeApplyPaymentBody
   ): Observable<FeeApplyPaymentResult> {
     return this.http.post<FeeApplyPaymentResult>(
-      `${API}/fees/student-fees/${studentFeeId}/payment`,
+      `${api()}/fees/student-fees/${studentFeeId}/payment`,
       body
     );
   }
