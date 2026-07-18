@@ -1,25 +1,43 @@
 /**
- * Writes API_ORIGIN from the environment into environment.prod.ts before build.
- * Usage (Vercel): set Project env API_ORIGIN, then `npm run build` runs this via prebuild.
+ * Writes API_ORIGIN into environment.prod.ts and public/env.js before build.
  */
 const fs = require('fs');
 const path = require('path');
 
 const origin = (process.env.API_ORIGIN || '').trim().replace(/\/$/, '');
-const file = path.join(__dirname, '..', 'src', 'environments', 'environment.prod.ts');
+const root = path.join(__dirname, '..');
+const envProd = path.join(root, 'src', 'environments', 'environment.prod.ts');
+const envJs = path.join(root, 'public', 'env.js');
 
 if (!origin) {
   console.log(
-    '[set-api-origin] API_ORIGIN not set — leaving environment.prod.ts unchanged. Set it on Vercel for production.',
+    '[set-api-origin] API_ORIGIN not set — leaving production placeholders. Set it on Vercel for live login.',
   );
+  // Still ensure env.js exists for local/prod fallback messaging
+  if (!fs.existsSync(envJs)) {
+    fs.writeFileSync(
+      envJs,
+      `window.__SKOLIX_API_ORIGIN__ = '';\n`,
+      'utf8',
+    );
+  }
   process.exit(0);
 }
 
-const contents = `export const environment = {
+fs.writeFileSync(
+  envProd,
+  `export const environment = {
   production: true,
   apiOrigin: ${JSON.stringify(origin)},
 };
-`;
+`,
+  'utf8',
+);
 
-fs.writeFileSync(file, contents, 'utf8');
+fs.writeFileSync(
+  envJs,
+  `window.__SKOLIX_API_ORIGIN__ = ${JSON.stringify(origin)};\n`,
+  'utf8',
+);
+
 console.log(`[set-api-origin] production apiOrigin = ${origin}`);

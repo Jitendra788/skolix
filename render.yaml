@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: skolix-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SKOLIX_ADMIN_USER
+        value: admin
+      - key: SKOLIX_ADMIN_PASS
+        value: admin123
+      - key: CORS_ORIGINS
+        sync: false

@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
+import { portalLoginErrorMessage } from '../core/portal-login.util';
 import { SessionService } from '../core/session.service';
 
 @Component({
@@ -63,9 +64,9 @@ export class StudentLoginComponent {
           this.session.loginAs(res.role, res.token, res.user_id, res.display_name);
           this.router.navigateByUrl('/student');
         },
-        error: () => {
+        error: (err) => {
           this.busy = false;
-          this.error = 'Invalid student credentials.';
+          this.error = portalLoginErrorMessage(err, 'student');
         },
       });
   }

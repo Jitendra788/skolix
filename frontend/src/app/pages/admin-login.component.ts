@@ -2,7 +2,9 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
+import { isApiOriginConfigured, portalLoginErrorMessage } from '../core/portal-login.util';
 import { SessionService } from '../core/session.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-admin-login',
@@ -27,6 +29,11 @@ import { SessionService } from '../core/session.service';
           <h2 class="auth-title">Admin Login</h2>
           <p class="auth-sub">Sign in with admin credentials.</p>
           <p class="auth-hint">Default: <code>admin</code> / <code>admin123</code></p>
+          @if (!apiReady) {
+            <p class="auth-alert">
+              API not configured. Set Vercel env <code>API_ORIGIN</code> to your public FastAPI URL, then redeploy.
+            </p>
+          }
           @if (error) {
             <p class="auth-alert">{{ error }}</p>
           }
@@ -51,10 +58,20 @@ export class AdminLoginComponent {
   password = '';
   busy = false;
   error = '';
+  readonly apiReady = isApiOriginConfigured(
+    (typeof window !== 'undefined' &&
+      (window as Window & { __SKOLIX_API_ORIGIN__?: string }).__SKOLIX_API_ORIGIN__) ||
+      environment.apiOrigin,
+  );
 
   login(): void {
     if (this.busy) return;
     this.error = '';
+    if (!this.apiReady) {
+      this.error =
+        'API not configured. Set Vercel env API_ORIGIN to your public backend URL and redeploy.';
+      return;
+    }
     this.busy = true;
     this.api
       .login({ role: 'admin', login_id: this.username.trim(), password: this.password })
@@ -64,9 +81,9 @@ export class AdminLoginComponent {
           this.session.loginAs(res.role, res.token, res.user_id, res.display_name);
           this.router.navigateByUrl('/');
         },
-        error: () => {
+        error: (err) => {
           this.busy = false;
-          this.error = 'Invalid admin credentials.';
+          this.error = portalLoginErrorMessage(err, 'admin');
         },
       });
   }

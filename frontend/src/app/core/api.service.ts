@@ -5,8 +5,19 @@ import { Observable } from 'rxjs';
 import { SessionService } from './session.service';
 import { environment } from '../../environments/environment';
 
-/** Backend origin from environment (local or production API). */
-const API_ORIGIN = (environment.apiOrigin || '').replace(/\/$/, '');
+function resolveApiOrigin(): string {
+  if (typeof window !== 'undefined') {
+    const w = window as Window & { __SKOLIX_API_ORIGIN__?: string };
+    const fromWindow = (w.__SKOLIX_API_ORIGIN__ || '').trim();
+    if (fromWindow && !fromWindow.includes('REPLACE_WITH_YOUR_API')) {
+      return fromWindow.replace(/\/$/, '');
+    }
+  }
+  return (environment.apiOrigin || '').replace(/\/$/, '');
+}
+
+/** Backend origin from environment / runtime env.js */
+const API_ORIGIN = resolveApiOrigin();
 const API = `${API_ORIGIN}/api`;
 
 export type AuthRole = 'admin' | 'teacher' | 'student';
