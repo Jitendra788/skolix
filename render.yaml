@@ -1,14 +1,21 @@
+# Render Blueprint — https://dashboard.render.com/blueprint/new?repo=https://github.com/Jitendra788/skolix
 services:
   - type: web
     name: skolix-api
     runtime: python
+    plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
       - key: SKOLIX_ADMIN_USER
         value: admin
       - key: SKOLIX_ADMIN_PASS
         value: admin123
       - key: CORS_ORIGINS
-        sync: false
+        value: https://skolix-navy.vercel.app
+      - key: SKOLIX_DB_PATH
+        value: /tmp/dungrana_school.db
