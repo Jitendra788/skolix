@@ -1,0 +1,656 @@
+<header class="page-head">
+  <h1>Attendance</h1>
+  <p class="lede">
+    Mark a <strong>whole class</strong> in one sheet, review a <strong>student’s year</strong>, filter the register by month
+    and status, browse a <strong>calendar matrix</strong>, and maintain the <strong>holiday calendar</strong>. Track whether
+    a leave <strong>application</strong> was received and any notes.
+  </p>
+</header>
+
+<nav class="attn-tabs" aria-label="Attendance views">
+  <div class="attn-tabs-inner" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="view === 'class_bulk'"
+      [class.active]="view === 'class_bulk'"
+      (click)="setView('class_bulk')"
+    >
+      Class (bulk)
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="view === 'student_year'"
+      [class.active]="view === 'student_year'"
+      (click)="setView('student_year')"
+    >
+      Student × year
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="view === 'register'"
+      [class.active]="view === 'register'"
+      (click)="setView('register')"
+    >
+      Register &amp; filters
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="view === 'calendar'"
+      [class.active]="view === 'calendar'"
+      (click)="setView('calendar')"
+    >
+      Calendar matrix
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="view === 'holidays'"
+      [class.active]="view === 'holidays'"
+      (click)="setView('holidays')"
+    >
+      Holiday calendar
+    </button>
+  </div>
+</nav>
+
+@if (view === 'class_bulk') {
+  <section class="crud-panel">
+    <h2>Mark attendance for whole class</h2>
+    <p class="panel-hint">
+      Choose class, optional section, date, and academic year. Load the sheet to pull the roster and any saved marks for
+      that day, then save once for everyone.
+    </p>
+    <div class="form-grid">
+      <label>
+        <span>Class</span>
+        <select [(ngModel)]="bulkClass" (ngModelChange)="onBulkClassChange()" class="input">
+          <option value="" disabled>Select class</option>
+          @for (c of schoolRef.classes(); track c.id) {
+            <option [value]="c.name">{{ c.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Section</span>
+        <select [(ngModel)]="bulkSection" class="input">
+          <option value="">All sections</option>
+          @for (letter of sectionLetters; track letter) {
+            <option [value]="letter">{{ letter }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Date</span>
+        <input type="date" [(ngModel)]="bulkDate" class="input narrow" />
+      </label>
+      <label>
+        <span>Academic year</span>
+        <select [(ngModel)]="bulkYear" class="input">
+          <option value="" disabled>Select year</option>
+          @for (y of schoolRef.academicYears(); track y.id) {
+            <option [value]="y.label">{{ y.label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+    @if (bulkErr) {
+      <p class="err">{{ bulkErr }}</p>
+    }
+    <div class="form-actions">
+      <button type="button" class="btn primary sm" [disabled]="bulkBusy" (click)="loadBulkSheet()">
+        {{ bulkBusy ? 'Loading…' : 'Load class sheet' }}
+      </button>
+      @if (bulkLoaded && bulkRows.length) {
+        <button type="button" class="btn sm" (click)="setBulkAllPresent(true)">All present</button>
+        <button type="button" class="btn sm" (click)="setBulkAllPresent(false)">All absent</button>
+        <button type="button" class="btn primary sm" [disabled]="bulkBusy" (click)="saveBulkSheet()">
+          {{ bulkBusy ? 'Saving…' : 'Save class attendance' }}
+        </button>
+      }
+    </div>
+
+    @if (bulkLoaded && !bulkRows.length) {
+      <p class="panel-hint">No students in this class/section. Add them under Students → admission.</p>
+    }
+
+    @if (bulkRows.length) {
+      <div class="table-wrap bulk-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Admission</th>
+              <th>Sec.</th>
+              <th>Present</th>
+              <th>Application received</th>
+              <th>Application notes</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of bulkRows; track r.admission_no) {
+              <tr>
+                <td>{{ r.student_name }}</td>
+                <td>{{ r.admission_no }}</td>
+                <td>{{ r.section || '—' }}</td>
+                <td>
+                  <label class="check-row tight">
+                    <input type="checkbox" [(ngModel)]="r.present" />
+                    <span>{{ r.present ? 'Present' : 'Absent' }}</span>
+                  </label>
+                </td>
+                <td>
+                  <input type="checkbox" [(ngModel)]="r.application_received" />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    class="input sm-input"
+                    [(ngModel)]="r.application_notes"
+                    [disabled]="!r.application_received"
+                    placeholder="Notes if application received"
+                  />
+                </td>
+                <td>
+                  <input type="text" class="input sm-input" [(ngModel)]="r.remarks" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}
+
+@if (view === 'student_year') {
+  <section class="crud-panel">
+    <h2>Attendance for one student (academic year)</h2>
+    <p class="panel-hint">
+      The label (e.g. <strong>2025-26</strong>) defines the usual session window (1 Apr 2025 – 31 Mar 2026). Attendance rows are
+      loaded if they fall in that window <em>or</em> carry this academic year on the record (so marks saved on dates just outside
+      the window still appear). Calendars cover that session plus any extra months needed (up to 24). <strong>P</strong> /
+      <strong>A</strong> = saved marks; gold = holiday. Hover a day for details.
+    </p>
+    <div class="form-grid">
+      <label class="span-2">
+        <span>Student</span>
+        <select [(ngModel)]="syAdmission" class="input">
+          <option value="">Select student</option>
+          @for (s of allStudents(); track s.id) {
+            <option [value]="s.admission_no">{{ studentLabel(s) }} — {{ s.class_name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Academic year</span>
+        <select [(ngModel)]="syYear" class="input">
+          <option value="" disabled>Select year</option>
+          @for (y of schoolRef.academicYears(); track y.id) {
+            <option [value]="y.label">{{ y.label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+    @if (syErr) {
+      <p class="err">{{ syErr }}</p>
+    }
+    <div class="form-actions">
+      <button type="button" class="btn primary sm" [disabled]="syBusy" (click)="loadStudentYear()">
+        {{ syBusy ? 'Loading…' : 'Load year (calendar + list)' }}
+      </button>
+    </div>
+
+    @if (syRangeHuman) {
+      <p class="sy-range-line"><strong>Session:</strong> {{ syRangeHuman }}</p>
+    }
+
+    @if (syMonthGrids.length) {
+      <div class="sy-year-calendars" aria-label="Attendance by month for academic year">
+        @for (grid of syMonthGrids; track grid.title) {
+          <div class="sy-mini-month">
+            <h3 class="sy-mini-title">{{ grid.title }}</h3>
+            <div class="sy-weekdays" role="row">
+              @for (wd of syWeekdayLabels; track wd) {
+                <span>{{ wd }}</span>
+              }
+            </div>
+            @for (week of grid.weeks; track $index) {
+              <div class="sy-week" role="row">
+                @for (c of week; track $index) {
+                  <div
+                    class="sy-day"
+                    [class.sy-day-empty]="c.day === null"
+                    [class.sy-day-holiday]="c.day !== null && c.isHoliday"
+                    [class.cell-p]="c.mark === 'P'"
+                    [class.cell-a]="c.mark === 'A'"
+                    [attr.title]="c.day !== null && c.tooltip ? c.tooltip : null"
+                  >
+                    @if (c.day !== null) {
+                      <span class="sy-day-num">{{ c.day }}</span>
+                      @if (c.mark) {
+                        <span class="sy-mark">{{ c.mark }}</span>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (syRows().length) {
+      <h3 class="sy-list-heading">All records in this date range</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Class</th>
+              <th>Section</th>
+              <th>Year (stored)</th>
+              <th>Status</th>
+              <th>Application</th>
+              <th>Notes</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of syRows(); track r.id) {
+              <tr>
+                <td>{{ r.date | date: 'mediumDate' }}</td>
+                <td>{{ r.class_name }}</td>
+                <td>{{ r.section || '—' }}</td>
+                <td>{{ r.academic_year || '—' }}</td>
+                <td>
+                  <span [class.present]="r.present" [class.absent]="!r.present">
+                    {{ r.present ? 'Present' : 'Absent' }}
+                  </span>
+                </td>
+                <td>{{ r.application_received ? 'Yes' : 'No' }}</td>
+                <td>{{ r.application_notes || '—' }}</td>
+                <td>{{ r.remarks || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}
+
+@if (view === 'register') {
+  <section class="crud-panel">
+    <h2>Quick entry (single record)</h2>
+    <div class="form-grid">
+      <label>
+        <span>Class</span>
+        <select
+          [(ngModel)]="class_name"
+          (ngModelChange)="onAttendanceClassChange()"
+          class="input"
+        >
+          <option value="" disabled>Select class</option>
+          @for (c of schoolRef.classes(); track c.id) {
+            <option [value]="c.name">{{ c.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="span-2">
+        <span>Pick from roster</span>
+        <select
+          [(ngModel)]="pickAdmissionNo"
+          (ngModelChange)="onPickStudentFromRoster($event)"
+          class="input"
+          [disabled]="!class_name"
+        >
+          <option value="">— Or type manually —</option>
+          @for (s of schoolRef.rosterFor(class_name); track s.id) {
+            <option [value]="s.admission_no">{{ s.full_name }} ({{ s.admission_no }})</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Student name</span>
+        <input type="text" [(ngModel)]="student_name" class="input" />
+      </label>
+      <label>
+        <span>Admission no.</span>
+        <input type="text" [(ngModel)]="admission_no" class="input" />
+      </label>
+      <label>
+        <span>Section</span>
+        <select [(ngModel)]="section" class="input">
+          <option value="">—</option>
+          @for (letter of sectionLetters; track letter) {
+            <option [value]="letter">{{ letter }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Date</span>
+        <input type="date" [(ngModel)]="record_date" class="input narrow" />
+      </label>
+      <label>
+        <span>Academic year</span>
+        <select [(ngModel)]="academic_year" class="input">
+          <option value="" disabled>Select year</option>
+          @for (y of schoolRef.academicYears(); track y.id) {
+            <option [value]="y.label">{{ y.label }}</option>
+          }
+        </select>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" [(ngModel)]="present" />
+        <span>Present</span>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" [(ngModel)]="application_received" />
+        <span>Application received</span>
+      </label>
+      <label class="span-2">
+        <span>Application notes</span>
+        <input
+          type="text"
+          [(ngModel)]="application_notes"
+          class="input"
+          [disabled]="!application_received"
+          placeholder="If application received, add notes"
+        />
+      </label>
+      <label class="span-2">
+        <span>Remarks</span>
+        <input type="text" [(ngModel)]="remarks" class="input" />
+      </label>
+    </div>
+    @if (formErr) {
+      <p class="err">{{ formErr }}</p>
+    }
+    <div class="form-actions">
+      <button type="button" class="btn primary sm" [disabled]="saving" (click)="save()">
+        {{ saving ? 'Saving…' : editingId != null ? 'Update' : 'Save' }}
+      </button>
+      @if (editingId != null) {
+        <button type="button" class="btn sm ghost" (click)="clearForm()">Cancel</button>
+      }
+    </div>
+  </section>
+
+  <section class="crud-panel">
+    <h2>Filtered register</h2>
+    <p class="panel-hint">
+      Filter by class, section, calendar month, present/absent only, and optionally one admission number. Then load the
+      list.
+    </p>
+    <div class="toolbar register-toolbar">
+      <select [(ngModel)]="regClass" class="input filter-select">
+        <option value="">All classes</option>
+        @for (c of schoolRef.classes(); track c.id) {
+          <option [value]="c.name">{{ c.name }}</option>
+        }
+      </select>
+      <select [(ngModel)]="regSection" class="input filter-select">
+        <option value="">All sections</option>
+        @for (letter of sectionLetters; track letter) {
+          <option [value]="letter">{{ letter }}</option>
+        }
+      </select>
+      <label class="month-field">
+        <span>Month</span>
+        <input type="month" [(ngModel)]="regMonth" class="input narrow" />
+      </label>
+      <select [(ngModel)]="regStatus" class="input filter-select">
+        <option value="">Present &amp; absent</option>
+        <option value="present">Present only</option>
+        <option value="absent">Absent only</option>
+      </select>
+      <input
+        type="text"
+        [(ngModel)]="regAdmission"
+        class="input"
+        placeholder="Admission no. (optional)"
+      />
+      <button type="button" class="btn primary" [disabled]="regBusy" (click)="loadRegister()">
+        {{ regBusy ? 'Loading…' : 'Load' }}
+      </button>
+    </div>
+    @if (regErr) {
+      <p class="err">{{ regErr }}</p>
+    }
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Student</th>
+            <th>Admission</th>
+            <th>Class</th>
+            <th>Sec.</th>
+            <th>Year</th>
+            <th>Status</th>
+            <th>App.</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of regRows(); track r.id) {
+            <tr>
+              <td>{{ r.date | date: 'mediumDate' }}</td>
+              <td>{{ r.student_name }}</td>
+              <td>{{ r.admission_no }}</td>
+              <td>{{ r.class_name }}</td>
+              <td>{{ r.section || '—' }}</td>
+              <td>{{ r.academic_year || '—' }}</td>
+              <td>
+                <span [class.present]="r.present" [class.absent]="!r.present">
+                  {{ r.present ? 'Present' : 'Absent' }}
+                </span>
+              </td>
+              <td>{{ r.application_received ? 'Y' : '—' }}</td>
+              <td class="row-actions">
+                <button type="button" class="btn sm" (click)="edit(r)">Edit</button>
+                <button type="button" class="btn sm danger" (click)="remove(r)">Delete</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="empty">No rows loaded. Adjust filters and click Load.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
+
+@if (view === 'calendar') {
+  <section class="crud-panel">
+    <h2>Student-wise calendar (month)</h2>
+    <p class="panel-hint">
+      Rows are students; columns are days. <strong>P</strong> / <strong>A</strong> = saved attendance. Highlighted column
+      headers are school holidays from the holiday calendar.
+    </p>
+    <div class="toolbar register-toolbar">
+      <select [(ngModel)]="calClass" class="input filter-select">
+        <option value="" disabled>Select class</option>
+        @for (c of schoolRef.classes(); track c.id) {
+          <option [value]="c.name">{{ c.name }}</option>
+        }
+      </select>
+      <select [(ngModel)]="calSection" class="input filter-select">
+        <option value="">All sections</option>
+        @for (letter of sectionLetters; track letter) {
+          <option [value]="letter">{{ letter }}</option>
+        }
+      </select>
+      <label class="month-field">
+        <span>Month</span>
+        <input type="month" [(ngModel)]="calMonth" class="input narrow" />
+      </label>
+      <button type="button" class="btn primary" [disabled]="calBusy" (click)="loadCalendar()">
+        {{ calBusy ? 'Loading…' : 'Load matrix' }}
+      </button>
+    </div>
+    @if (calErr) {
+      <p class="err">{{ calErr }}</p>
+    }
+
+    @if (calStudents.length && calDays.length) {
+      <div class="table-wrap cal-scroll">
+        <table class="cal-matrix">
+          <thead>
+            <tr>
+              <th class="sticky-col">Student</th>
+              @for (d of calDays; track d) {
+                <th [class.holiday-head]="calHolidayDays.has(d)">{{ d }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of calStudents; track s.id) {
+              <tr>
+                <th class="sticky-col name-cell">{{ s.full_name }}</th>
+                @for (d of calDays; track d) {
+                  @switch (calCell(s.admission_no, d)) {
+                    @case ('P') {
+                      <td class="cell-p">P</td>
+                    }
+                    @case ('A') {
+                      <td class="cell-a">A</td>
+                    }
+                    @default {
+                      <td class="cell-empty">·</td>
+                    }
+                  }
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}
+
+@if (view === 'holidays') {
+  <section class="crud-panel">
+    <h2>School holiday calendar</h2>
+    <p class="panel-hint">
+      Add holidays in advance; they appear on the attendance calendar matrix and student year views. Use
+      <strong>Recurring weekly</strong> to mark every Sunday (or any weekday) across a date range in one step.
+    </p>
+
+    <h3 class="subpanel-title">Recurring weekly (e.g. every Sunday)</h3>
+    <p class="panel-hint">
+      Picks each matching weekday between the two dates. If “Skip dates that already have a holiday” is on, existing
+      holidays on that date are left unchanged (useful when you mix weekly offs with festival days).
+    </p>
+    <div class="form-grid">
+      <label>
+        <span>From</span>
+        <input type="date" [(ngModel)]="holWeeklyFrom" class="input narrow" />
+      </label>
+      <label>
+        <span>To</span>
+        <input type="date" [(ngModel)]="holWeeklyTo" class="input narrow" />
+      </label>
+      <label>
+        <span>Weekday</span>
+        <select [(ngModel)]="holWeeklyWeekday" class="input">
+          @for (opt of holWeekdayOptions; track opt.v) {
+            <option [ngValue]="opt.v">{{ opt.label }}</option>
+          }
+        </select>
+      </label>
+      <label class="span-2">
+        <span>Name for each date</span>
+        <input
+          type="text"
+          [(ngModel)]="holWeeklyName"
+          class="input"
+          placeholder="e.g. Sunday (weekly off)"
+        />
+      </label>
+      <label class="span-2">
+        <span>Notes (optional, same for all)</span>
+        <input type="text" [(ngModel)]="holWeeklyNotes" class="input" />
+      </label>
+      <label class="check-row span-2">
+        <input type="checkbox" [(ngModel)]="holWeeklySkipIfBusy" />
+        <span>Skip dates that already have any holiday</span>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn primary sm" [disabled]="holBusy" (click)="generateWeeklyHolidays()">
+        {{ holBusy ? 'Working…' : 'Generate weekly holidays' }}
+      </button>
+    </div>
+    @if (holGenMsg) {
+      <p class="ok-msg">{{ holGenMsg }}</p>
+    }
+
+    <h3 class="subpanel-title">Single date</h3>
+    <div class="form-grid">
+      <label>
+        <span>Date</span>
+        <input type="date" [(ngModel)]="holDate" class="input narrow" />
+      </label>
+      <label class="span-2">
+        <span>Name</span>
+        <input type="text" [(ngModel)]="holName" class="input" placeholder="e.g. Diwali break" />
+      </label>
+      <label class="span-2">
+        <span>Notes</span>
+        <input type="text" [(ngModel)]="holNotes" class="input" />
+      </label>
+    </div>
+    @if (holErr) {
+      <p class="err">{{ holErr }}</p>
+    }
+    <div class="form-actions">
+      <button type="button" class="btn primary sm" [disabled]="holBusy" (click)="saveHoliday()">
+        {{ holBusy ? 'Saving…' : editingHolId != null ? 'Update holiday' : 'Add holiday' }}
+      </button>
+      @if (editingHolId != null) {
+        <button type="button" class="btn sm ghost" (click)="cancelHolidayEdit()">Cancel</button>
+      }
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (h of holidaysList(); track h.id) {
+            <tr>
+              <td>{{ h.holiday_date | date: 'mediumDate' }}</td>
+              <td>{{ h.name }}</td>
+              <td>{{ h.notes || '—' }}</td>
+              <td class="row-actions">
+                <button type="button" class="btn sm" (click)="startEditHoliday(h)">Edit</button>
+                <button type="button" class="btn sm danger" (click)="removeHoliday(h)">Delete</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty">No holidays yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

@@ -1,0 +1,247 @@
+@use './pages-shared.scss';
+
+:host {
+  display: block;
+}
+
+.fs-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.fs-bc {
+  display: flex;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.fs-bc-sep {
+  color: var(--border-strong);
+  user-select: none;
+}
+
+.fs-bc-here {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.fs-head {
+  margin-bottom: 1.25rem;
+  max-width: 70ch;
+}
+
+.fs-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+
+.fs-lede {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  font-size: 0.9375rem;
+}
+
+.fs-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.fs-err {
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--danger);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+.fs-ok {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.fs-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.fs-filters-title {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fs-field-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+
+.fs-req {
+  font-weight: 500;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.fs-field-block {
+  width: 100%;
+  max-width: 420px;
+}
+
+.fs-select {
+  max-width: 280px;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font: inherit;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.fs-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.fs-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.fs-hint-tight {
+  margin-top: 0.35rem;
+}
+
+.fs-ay-value {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.fs-ay-note {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.fs-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  align-items: stretch;
+}
+
+.fs-select-full {
+  max-width: none;
+  width: 100%;
+}
+
+.fs-section-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.fs-vertical-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.fs-vertical-row {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid var(--border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.fs-vertical-row-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  max-width: 420px;
+}
+
+.fs-head-name {
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  font-size: 0.95rem;
+}
+
+.fs-num-full {
+  width: 100%;
+  max-width: none;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+}
+
+.fs-subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+
+  strong {
+    font-size: 1.05rem;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.fs-actions {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.fs-muted {
+  color: var(--muted);
+}
+
+.fs-num {
+  width: 5.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font: inherit;
+  background: var(--surface);
+  color: var(--text);
+}

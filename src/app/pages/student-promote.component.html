@@ -1,0 +1,149 @@
+<header class="page-head sp-head">
+  <h1>Promote students</h1>
+  <p class="lede">
+    Choose a source class, select students, and move them to the next class in bulk.
+  </p>
+</header>
+
+@if (saveMessage(); as sm) {
+  <p class="sp-msg" [class.sp-msg--err]="sm.error" role="status">
+    {{ sm.text }}
+    <button type="button" class="btn sm ghost" (click)="saveMessage.set(null)">Dismiss</button>
+  </p>
+}
+
+<section class="sp-controls">
+  <label class="sp-field">
+    <span class="sp-label">Source class</span>
+    <select class="input" [ngModel]="sourceClass()" (ngModelChange)="sourceClass.set($event)">
+      <option value="" disabled>Select class</option>
+      @for (c of schoolRef.classes(); track c.id) {
+        <option [value]="c.name">{{ c.name }}</option>
+      }
+    </select>
+  </label>
+  <label class="sp-field">
+    <span class="sp-label">Search student</span>
+    <input
+      type="search"
+      class="input"
+      placeholder="Name or admission number"
+      [ngModel]="searchTerm()"
+      (ngModelChange)="searchTerm.set($event)"
+    />
+  </label>
+  <div class="sp-controls-actions">
+    <button
+      type="button"
+      class="btn sm"
+      [disabled]="loading() || !sourceClass().trim()"
+      (click)="loadStudentsForClass()"
+    >
+      {{ loading() ? 'Loading…' : 'Load students' }}
+    </button>
+    <button
+      type="button"
+      class="btn sm ghost"
+      [disabled]="loading() || !sourceClass().trim()"
+      (click)="reload()"
+    >
+      Reload
+    </button>
+  </div>
+</section>
+
+<section class="sp-layout">
+  <section class="sp-table-wrap">
+    @if (loadError()) {
+      <p class="err">{{ loadError() }}</p>
+    }
+    <div class="sp-table-head">
+      <h2 class="sp-title">Students</h2>
+      <label class="sp-check-inline">
+        <input
+          type="checkbox"
+          [ngModel]="allVisibleSelected()"
+          (ngModelChange)="toggleVisible($event)"
+          [disabled]="filteredStudents().length === 0"
+        />
+        <span>Select visible</span>
+      </label>
+    </div>
+    <table class="data-table sp-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Student name</th>
+          <th>Class</th>
+          <th class="sp-check-col">Select</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr><td colspan="4" class="muted">Loading students…</td></tr>
+        } @else if (filteredStudents().length === 0) {
+          <tr><td colspan="4" class="muted">No students found for this filter.</td></tr>
+        } @else {
+          @for (s of filteredStudents(); track s.id) {
+            <tr>
+              <td class="sp-mono">{{ s.admission_no }}</td>
+              <td>{{ s.full_name }}</td>
+              <td>{{ s.class_name }}</td>
+              <td>
+                <label class="sp-check-inline">
+                  <input
+                    type="checkbox"
+                    [ngModel]="selected(s.id)"
+                    (ngModelChange)="toggleOne(s.id, $event)"
+                  />
+                  <span class="sp-only-desktop">Select</span>
+                </label>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <aside class="sp-panel sp-panel--promote">
+    <h2 class="sp-title">Promotion</h2>
+    <label class="sp-field">
+      <span class="sp-label">Target class</span>
+      <select class="input" [ngModel]="targetClass()" (ngModelChange)="targetClass.set($event)">
+        <option value="" disabled>Select class</option>
+        @for (c of schoolRef.classes(); track c.id) {
+          <option [value]="c.name">{{ c.name }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="sp-summary">
+      <p class="sp-summary-label">Selected students</p>
+      <p class="sp-summary-value">{{ selectedCount() }}</p>
+    </div>
+
+    <button
+      type="button"
+      class="btn primary"
+      [disabled]="
+        saving() ||
+        loading() ||
+        selectedCount() === 0 ||
+        !targetClass().trim() ||
+        !sourceClass().trim()
+      "
+      (click)="savePromotions()"
+    >
+      {{ saving() ? 'Saving…' : 'Promote selected' }}
+    </button>
+    <button
+      type="button"
+      class="btn sm ghost"
+      [disabled]="saving() || selectedCount() === 0"
+      (click)="clearSelection()"
+    >
+      Clear selection
+    </button>
+  </aside>
+</section>

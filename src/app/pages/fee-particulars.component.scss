@@ -1,0 +1,254 @@
+@use './pages-shared.scss';
+
+:host {
+  display: block;
+}
+
+.fp-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.fp-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.fp-bc-sep {
+  color: var(--border-strong);
+}
+
+.fp-bc-here {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.fp-header {
+  margin-bottom: 1.5rem;
+}
+
+.fp-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.fp-lede {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 62ch;
+  font-size: 0.9375rem;
+}
+
+.fp-alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md, 12px);
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
+}
+
+.fp-alert-err {
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--danger);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+.fp-alert-ok {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.fp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.35rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.fp-card-title {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fp-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.fp-float {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.fp-float-grow {
+  min-width: 0;
+}
+
+.fp-ay-block {
+  align-self: end;
+}
+
+.fp-ay-readonly {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.fp-ay-note {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.fp-float-label {
+  position: absolute;
+  left: 0.85rem;
+  top: -0.45rem;
+  z-index: 1;
+  padding: 0 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft);
+}
+
+.fp-label-amount {
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.fp-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.fp-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.fp-input:disabled,
+.fp-input[readonly] {
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.fp-input-fixed {
+  background: var(--bg-subtle) !important;
+  color: var(--muted) !important;
+}
+
+.fp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.fp-hint {
+  margin: 1rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.fp-muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.fp-rows-card .fp-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.85rem 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.fp-row-head {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+  padding: 0 0.25rem;
+}
+
+.fp-source {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-bottom: 0.15rem;
+}
+
+.fp-source-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.fp-source-fixed {
+  background: var(--bg-subtle);
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+@media (max-width: 720px) {
+  .fp-rows-card .fp-row-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fp-row-head {
+    display: none;
+  }
+
+  .fp-source {
+    min-height: unset;
+    justify-content: flex-start;
+    margin-top: -0.35rem;
+  }
+}

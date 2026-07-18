@@ -1,0 +1,360 @@
+<header class="page-head">
+  <h1>Portal passwords</h1>
+  <p class="lede">
+    Use the <strong>Portal access</strong> column to turn student login on or off. Open <strong>Manage</strong> to set login id and password.
+    <strong>Apply defaults</strong> sets the default password (<strong>name + date of birth</strong>) for students who have none yet and turns access on for them.
+  </p>
+</header>
+
+<section class="spl-shell">
+  <div class="toolbar spl-toolbar">
+    <input
+      type="search"
+      class="input spl-search"
+      [(ngModel)]="search"
+      (ngModelChange)="onSearchInput()"
+      placeholder="Search name, admission no., class, or login id"
+      autocomplete="off"
+    />
+    <button
+      type="button"
+      class="btn sm"
+      (click)="applyDefaultPasswords()"
+      [disabled]="loading || applyingDefaults"
+      title="Enable login and set name+DOB password for students who have no password yet"
+    >
+      {{ applyingDefaults ? 'Working…' : 'Apply defaults' }}
+    </button>
+    <button type="button" class="btn sm" (click)="refreshPage()" [disabled]="loading">
+      Refresh
+    </button>
+  </div>
+
+  @if (portalAccessBanner; as pb) {
+    <p
+      class="spl-access-banner"
+      [class.spl-access-banner--err]="pb.error"
+      role="status"
+    >
+      {{ pb.text }}
+      <button
+        type="button"
+        class="btn sm ghost spl-access-banner-dismiss"
+        (click)="dismissPortalBanner()"
+      >
+        Dismiss
+      </button>
+    </p>
+  }
+
+  @if (applyDefaultsMessage) {
+    <p class="spl-apply-msg" [class.err]="applyDefaultsError">
+      {{ applyDefaultsMessage }}
+    </p>
+  }
+
+  @if (loading) {
+    <p class="muted">Loading students…</p>
+  }
+  @if (loadError) {
+    <p class="err">{{ loadError }}</p>
+  }
+
+  @if (!loading && !loadError && totalCount > 0) {
+    <div class="spl-pager">
+      <span class="muted spl-page-meta">{{ pageLabel }}</span>
+      <div class="spl-pager-btns">
+        <button
+          type="button"
+          class="btn sm"
+          (click)="goPrev()"
+          [disabled]="pageIndex <= 0 || loading"
+        >
+          Previous
+        </button>
+        <span class="spl-page-num muted"
+          >Page {{ pageIndex + 1 }} / {{ totalPages }}</span
+        >
+        <button
+          type="button"
+          class="btn sm"
+          (click)="goNext()"
+          [disabled]="pageIndex >= totalPages - 1 || loading"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (!loading && !loadError && totalCount > 0) {
+    <div class="spl-table-wrap">
+      <table class="spl-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Reg. no.</th>
+            <th>Class</th>
+            <th>Login id</th>
+            <th class="spl-th-access">Portal access</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of students; track s.id) {
+            <tr>
+              <td class="spl-td-name">{{ s.full_name }}</td>
+              <td>{{ s.admission_no }}</td>
+              <td>{{ classLine(s) }}</td>
+              <td class="spl-mono">{{ effectiveLoginId(s) }}</td>
+              <td class="spl-td-access">
+                <div class="spl-access-stack">
+                  <label
+                    class="spl-toggle spl-toggle--row"
+                    [attr.title]="
+                      isPortalAccessOn(s) ? 'Portal access on' : 'Portal access off'
+                    "
+                  >
+                    <span class="spl-toggle-slot">
+                      <input
+                        type="checkbox"
+                        class="spl-toggle-input"
+                        role="switch"
+                        [attr.aria-checked]="isPortalAccessOn(s)"
+                        [ngModel]="isPortalAccessOn(s)"
+                        (ngModelChange)="setPortalAccess(s, $event)"
+                        [disabled]="portalToggleBusyId === s.id"
+                      />
+                      <span class="spl-toggle-track" aria-hidden="true">
+                        <span class="spl-toggle-thumb"></span>
+                      </span>
+                    </span>
+                    <span class="spl-toggle-caption">{{
+                      isPortalAccessOn(s) ? 'On' : 'Off'
+                    }}</span>
+                  </label>
+                  @if (isPortalAccessOn(s)) {
+                    @if (hasPortalPassword(s)) {
+                      <span class="spl-access-note">Password saved</span>
+                    } @else {
+                      <span class="spl-access-note spl-access-note--warn">No password yet</span>
+                    }
+                  }
+                </div>
+              </td>
+              <td class="spl-td-actions">
+                <button type="button" class="btn sm primary" (click)="openEdit(s)">
+                  Manage
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (students.length === 0 && search.trim()) {
+      <p class="muted">No students match your search.</p>
+    }
+  }
+</section>
+
+@if (dialogOpen && editStudent; as st) {
+  <div
+    class="spl-backdrop"
+    tabindex="-1"
+    aria-hidden="true"
+    (click)="closeDialog()"
+  ></div>
+  <div
+    class="spl-modal"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="'spl-dlg-title'"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="spl-modal-inner">
+      <h2 id="spl-dlg-title" class="spl-dlg-title">Portal login — {{ st.full_name }}</h2>
+      <p class="spl-dlg-meta muted">
+        Reg. {{ st.admission_no }} · {{ classLine(st) }}
+      </p>
+      <p class="spl-dlg-hint muted">
+        Default password pattern (when the system creates one):
+        <code class="spl-code">{{ defaultPasswordHint(st) }}</code>
+      </p>
+
+      <div class="spl-access-panel">
+        <div class="spl-toggle-row spl-toggle-row--panel">
+          <label class="spl-toggle spl-toggle--panel">
+            <span class="spl-toggle-panel-text">Portal access</span>
+            <span class="spl-toggle-slot">
+              <input
+                type="checkbox"
+                class="spl-toggle-input"
+                role="switch"
+                [attr.aria-checked]="isPortalAccessOn(st)"
+                [ngModel]="isPortalAccessOn(st)"
+                (ngModelChange)="setPortalAccess(st, $event)"
+                [disabled]="portalToggleBusyId === st.id || saving"
+              />
+              <span class="spl-toggle-track" aria-hidden="true">
+                <span class="spl-toggle-thumb"></span>
+              </span>
+            </span>
+          </label>
+          <span
+            class="spl-toggle-status"
+            [class.spl-toggle-status--on]="isPortalAccessOn(st)"
+            [class.spl-toggle-status--off]="!isPortalAccessOn(st)"
+            >{{ isPortalAccessOn(st) ? 'On' : 'Off' }}</span
+          >
+        </div>
+        <p class="spl-toggle-hint">
+          When on, the student can sign in. Turning on without a saved password applies the default pattern above.
+        </p>
+      </div>
+
+      @if (isPortalAccessOn(st)) {
+      <label class="spl-field">
+        <span class="spl-label">Login id (optional)</span>
+        <input
+          type="text"
+          class="input"
+          [(ngModel)]="formUsername"
+          placeholder="Leave blank to use admission number"
+          autocomplete="off"
+        />
+      </label>
+      <p class="spl-hint muted">
+        Effective login id:
+        <strong class="spl-mono">{{ (formUsername.trim() || st.admission_no) || '—' }}</strong>
+      </p>
+
+        <div class="spl-field">
+          <span class="spl-label">
+            @if (hasPortalPassword(st)) {
+              New password (optional)
+            } @else {
+              Password
+            }
+          </span>
+          <div class="spl-pw-row">
+            <input
+              [type]="showPwd1 ? 'text' : 'password'"
+              class="input spl-pw-input"
+              [(ngModel)]="formPassword"
+              autocomplete="new-password"
+              [attr.placeholder]="
+                hasPortalPassword(st) ? 'Leave blank to keep current password' : 'At least 6 characters'
+              "
+            />
+            <button
+              type="button"
+              class="spl-pw-toggle btn sm"
+              (click)="showPwd1 = !showPwd1"
+              [attr.aria-label]="showPwd1 ? 'Hide password' : 'Show password'"
+              [attr.title]="showPwd1 ? 'Hide' : 'Show'"
+            >
+              @if (showPwd1) {
+                <svg
+                  class="spl-eye"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                  />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              } @else {
+                <svg
+                  class="spl-eye"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+        <div class="spl-field">
+          <span class="spl-label">Confirm password</span>
+          <div class="spl-pw-row">
+            <input
+              [type]="showPwd2 ? 'text' : 'password'"
+              class="input spl-pw-input"
+              [(ngModel)]="formPassword2"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="spl-pw-toggle btn sm"
+              (click)="showPwd2 = !showPwd2"
+              [attr.aria-label]="showPwd2 ? 'Hide password' : 'Show password'"
+              [attr.title]="showPwd2 ? 'Hide' : 'Show'"
+            >
+              @if (showPwd2) {
+                <svg
+                  class="spl-eye"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                  />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              } @else {
+                <svg
+                  class="spl-eye"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (saveError) {
+        <p class="err">{{ saveError }}</p>
+      }
+
+      <div class="spl-modal-actions">
+        <button type="button" class="btn" (click)="closeDialog()" [disabled]="saving">
+          Cancel
+        </button>
+        @if (isPortalAccessOn(st)) {
+          <button type="button" class="btn primary" (click)="save()" [disabled]="saving">
+            {{ saving ? 'Saving…' : 'Save' }}
+          </button>
+        }
+      </div>
+
+      <p class="muted spl-footnote">
+        Portal access is controlled here and in the table column. Use <strong>Save</strong> for login id and password only
+        while access is on.
+      </p>
+    </div>
+  </div>
+}

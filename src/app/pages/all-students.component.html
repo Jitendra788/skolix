@@ -1,0 +1,683 @@
+<header class="page-head as-page-head">
+  <h1>All students</h1>
+  <p class="lede">
+    Open a class roster with the filters below. Optional search matches name, registration no., parent phone, board roll,
+    or father/mother mobile. Expand a row for full details; use the icons for <strong>report</strong> or <strong>full edit</strong>.
+    Portal login is managed on the <strong>Portal passwords</strong> screen.
+  </p>
+</header>
+
+<section class="as-filters-card" aria-labelledby="as-filters-title">
+  <div class="as-filters-card-head">
+    <h2 id="as-filters-title" class="as-filters-card-title">Roster filters</h2>
+    <p class="as-filters-card-desc muted">
+      Academic year, class, and section are required before loading. Search and view mode are optional.
+    </p>
+  </div>
+  <div class="toolbar as-toolbar as-toolbar-wide as-filters-toolbar">
+    <label class="as-filter">
+      <span>Academic year</span>
+      <select
+        class="input"
+        [ngModel]="yearFilter()"
+        (ngModelChange)="yearFilter.set($event)"
+      >
+        <option value="" disabled>Select session</option>
+        @for (y of yearOptions(); track y) {
+          <option [value]="y">{{ y }}</option>
+        }
+      </select>
+    </label>
+    <label class="as-filter">
+      <span>Class</span>
+      <select
+        class="input"
+        [ngModel]="classFilter()"
+        (ngModelChange)="classFilter.set($event)"
+      >
+        <option value="" disabled>Select class</option>
+        @for (c of schoolRef.classes(); track c.id) {
+          <option [value]="c.name">{{ c.name }}</option>
+        }
+      </select>
+    </label>
+    <label class="as-filter">
+      <span>Section</span>
+      <select
+        class="input"
+        [ngModel]="sectionFilter()"
+        (ngModelChange)="sectionFilter.set($event)"
+      >
+        <option value="" disabled>Select section</option>
+        <option value="*">All sections</option>
+        @for (letter of sectionLetters; track letter) {
+          <option [value]="letter">{{ letter }}</option>
+        }
+      </select>
+    </label>
+    <label class="as-filter as-filter-grow">
+      <span>Search (optional)</span>
+      <input
+        type="search"
+        class="input"
+        placeholder="Name, reg. no., phone, roll…"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        (keydown.enter)="loadStudents(); $event.preventDefault()"
+      />
+    </label>
+    <div class="as-toolbar-actions">
+      <button
+        type="button"
+        class="btn primary sm"
+        [disabled]="!canLoad() || loading()"
+        (click)="loadStudents()"
+      >
+        {{ loading() ? 'Loading…' : 'Load students' }}
+      </button>
+      <div class="as-view-toggle" role="group" aria-label="Layout">
+        <span class="as-view-label">View</span>
+        <button
+          type="button"
+          class="btn sm"
+          [class.primary]="viewMode() === 'table'"
+          (click)="setView('table')"
+        >
+          Table
+        </button>
+        <button
+          type="button"
+          class="btn sm"
+          [class.primary]="viewMode() === 'list'"
+          (click)="setView('list')"
+        >
+          List
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+@if (loadError()) {
+  <div class="as-state as-state--error" role="alert">
+    <div class="as-state-inner">
+      <span class="as-state-badge">Error</span>
+      <h3 class="as-state-title">Could not load students</h3>
+      <p class="as-state-text muted">Check your connection or try again in a moment.</p>
+      <button type="button" class="btn sm primary" (click)="loadStudents()">Retry</button>
+    </div>
+  </div>
+}
+
+@if (loading()) {
+  <div class="as-state as-state--loading" aria-busy="true" aria-live="polite">
+    <div class="as-state-inner">
+      <div class="as-state-spinner" aria-hidden="true"></div>
+      <h3 class="as-state-title">Loading roster…</h3>
+      <p class="as-state-text muted">Fetching students for your filters.</p>
+    </div>
+  </div>
+}
+
+@if (!loading() && !loadError() && students().length === 0) {
+  <div class="as-state as-state--empty">
+    <div class="as-state-inner">
+      @if (!canLoad()) {
+        <div class="as-state-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+            <path d="M4 6h16M4 12h10M4 18h7" />
+            <circle cx="17" cy="12" r="3" />
+          </svg>
+        </div>
+        <h3 class="as-state-title">Complete the filters</h3>
+        <p class="as-state-text muted">
+          Choose <strong>academic year</strong>, <strong>class</strong>, and <strong>section</strong> in the card above, then
+          press <strong>Load students</strong>.
+        </p>
+        <ul class="as-state-list muted">
+          <li>Session — pick the active year or the one you need.</li>
+          <li>Class — must match School setup.</li>
+          <li>Section — pick a letter or &ldquo;All sections&rdquo;.</li>
+        </ul>
+      } @else if (!hasAttemptedLoad()) {
+        <div class="as-state-icon as-state-icon--ready" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </div>
+        <h3 class="as-state-title">Ready to load</h3>
+        <p class="as-state-text muted">
+          Your filters are set. Click <strong>Load students</strong> in the card above to fetch the roster.
+        </p>
+      } @else {
+        <div class="as-state-icon as-state-icon--search" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg>
+        </div>
+        <h3 class="as-state-title">No students found</h3>
+        <p class="as-state-text muted">
+          Nothing matches this session, class, section, and search. Widen section to &ldquo;All sections&rdquo;, clear
+          search, or try another class or year.
+        </p>
+        <button type="button" class="btn sm" (click)="loadStudents()">Search again</button>
+      }
+    </div>
+  </div>
+}
+
+@if (!loading() && !loadError() && hasAttemptedLoad() && totalCount() > 0) {
+  <ng-container
+    [ngTemplateOutlet]="rosterPagerTpl"
+    [ngTemplateOutletContext]="{ placement: 'top' }"
+  />
+}
+
+@if (!loading() && !loadError() && students().length > 0 && viewMode() === 'table') {
+  <div class="table-wrap">
+    <table class="data-table as-table">
+      <thead>
+        <tr>
+          <th class="as-col-quick">
+            <span class="sr-only">Report, full edit, expand row</span>
+          </th>
+          <th>Reg. no.</th>
+          <th>Student</th>
+          <th>Class</th>
+          <th>Sec.</th>
+          <th>DOB</th>
+          <th>Gender</th>
+          <th>Parent phone</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of students(); track s.id) {
+          <tr [class.as-row-open]="isExpanded(s.id)">
+            <td class="as-col-quick">
+              <div class="as-row-quick">
+                <a
+                  class="as-icon-btn"
+                  [routerLink]="['/students', s.id, 'report']"
+                  title="Student report"
+                  aria-label="Open student report"
+                >
+                  <svg class="as-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </a>
+                <a
+                  class="as-icon-btn"
+                  [routerLink]="['/students/admission']"
+                  [queryParams]="{ edit: s.id }"
+                  title="Full edit (admission form)"
+                  aria-label="Full edit in admission form"
+                >
+                  <svg class="as-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </a>
+                <button
+                  type="button"
+                  class="as-expand-btn"
+                  [attr.aria-expanded]="isExpanded(s.id)"
+                  (click)="toggleExpand(s.id)"
+                  title="Show or hide details"
+                >
+                  {{ isExpanded(s.id) ? '▾' : '▸' }}
+                </button>
+              </div>
+            </td>
+            <td class="as-cell-mono">{{ s.admission_no }}</td>
+            <td>{{ s.full_name }}</td>
+            <td>{{ s.class_name }}</td>
+            <td>{{ s.section || '—' }}</td>
+            <td>{{ s.date_of_birth || '—' }}</td>
+            <td>{{ s.gender || '—' }}</td>
+            <td class="as-cell-mono">{{ s.parent_phone || '—' }}</td>
+          </tr>
+          @if (isExpanded(s.id)) {
+            <tr class="as-detail-tr">
+              <td colspan="8" class="as-detail-td">
+                <div class="as-accordion">
+                  @if (editingId() !== s.id) {
+                    <h4 class="as-accordion-title">Student details</h4>
+                    <dl class="as-detail-dl as-detail-dl--multicolumn">
+                      <dt>Academic session</dt>
+                      <dd>{{ sessionYearLabel(s) }}</dd>
+                      <dt>Admission date (stored)</dt>
+                      <dd>{{ admissionDateIso(s) || '—' }}</dd>
+                      <dt>Class / section</dt>
+                      <dd>{{ s.class_name }} @if (s.section) { · {{ s.section }} }</dd>
+                      <dt>Parent / guardian</dt>
+                      <dd>{{ s.parent_name || '—' }}</dd>
+                      <dt>SMS / parent phone</dt>
+                      <dd>{{ s.parent_phone || '—' }}</dd>
+                      <dt>Religion</dt>
+                      <dd>{{ extraStr(s, 'religion') || '—' }}</dd>
+                      <dt>Blood group</dt>
+                      <dd>{{ extraStr(s, 'blood_group') || '—' }}</dd>
+                      <dt>Previous board roll no.</dt>
+                      <dd>{{ extraStr(s, 'previous_board_roll') || '—' }}</dd>
+                      <dt>Father mobile</dt>
+                      <dd>{{ extraStr(s, 'father_mobile') || '—' }}</dd>
+                      <dt>Mother mobile</dt>
+                      <dd>{{ extraStr(s, 'mother_mobile') || '—' }}</dd>
+                      <dt>Address</dt>
+                      <dd>{{ extraStr(s, 'address') || '—' }}</dd>
+                      @for (row of extraDisplayRowsRemaining(s); track row.label) {
+                        <dt>{{ row.label }}</dt>
+                        <dd>{{ row.value }}</dd>
+                      }
+                    </dl>
+                    <div class="as-accordion-actions">
+                      <button type="button" class="btn sm primary" (click)="startEdit(s)">Edit details</button>
+                      <a
+                        class="as-icon-btn as-icon-btn--lg"
+                        [routerLink]="['/students/admission']"
+                        [queryParams]="{ edit: s.id }"
+                        title="Full edit (admission form)"
+                        aria-label="Full edit in admission form"
+                      >
+                        <svg class="as-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </a>
+                      <button type="button" class="btn sm ghost" (click)="toggleExpand(s.id)">Collapse</button>
+                    </div>
+                  } @else {
+                    <h4 class="as-accordion-title">Edit student</h4>
+                    @if (draft(); as d) {
+                      <div class="as-edit-grid">
+                        <label>
+                          <span>Admission no. *</span>
+                          <input
+                            type="text"
+                            class="input"
+                            [ngModel]="d.admission_no"
+                            (ngModelChange)="patchDraft('admission_no', $event)"
+                          />
+                        </label>
+                        <label>
+                          <span>Full name *</span>
+                          <input
+                            type="text"
+                            class="input"
+                            [ngModel]="d.full_name"
+                            (ngModelChange)="patchDraft('full_name', $event)"
+                          />
+                        </label>
+                        <label>
+                          <span>Class *</span>
+                          <select
+                            class="input"
+                            [ngModel]="d.class_name"
+                            (ngModelChange)="patchDraft('class_name', $event)"
+                          >
+                            <option value="" disabled>Select</option>
+                            @for (c of schoolRef.classes(); track c.id) {
+                              <option [value]="c.name">{{ c.name }}</option>
+                            }
+                          </select>
+                        </label>
+                        <label>
+                          <span>Section</span>
+                          <select
+                            class="input"
+                            [ngModel]="d.section"
+                            (ngModelChange)="patchDraft('section', $event)"
+                          >
+                            <option value="">—</option>
+                            @for (letter of sectionLetters; track letter) {
+                              <option [value]="letter">{{ letter }}</option>
+                            }
+                          </select>
+                        </label>
+                        <label>
+                          <span>Date of birth</span>
+                          <input
+                            type="date"
+                            class="input"
+                            [ngModel]="d.date_of_birth"
+                            (ngModelChange)="patchDraft('date_of_birth', $event)"
+                          />
+                        </label>
+                        <label>
+                          <span>Gender</span>
+                          <select
+                            class="input"
+                            [ngModel]="d.gender"
+                            (ngModelChange)="patchDraft('gender', $event)"
+                          >
+                            <option value="">—</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </label>
+                        <label class="as-edit-span-2">
+                          <span>Parent / guardian name</span>
+                          <input
+                            type="text"
+                            class="input"
+                            [ngModel]="d.parent_name"
+                            (ngModelChange)="patchDraft('parent_name', $event)"
+                          />
+                        </label>
+                        <label class="as-edit-span-2">
+                          <span>Parent phone</span>
+                          <input
+                            type="text"
+                            class="input"
+                            [ngModel]="d.parent_phone"
+                            (ngModelChange)="patchDraft('parent_phone', $event)"
+                          />
+                        </label>
+                      </div>
+                    }
+                    @if (editError()) {
+                      <p class="err">{{ editError() }}</p>
+                    }
+                    <div class="as-accordion-actions">
+                      <button type="button" class="btn sm primary" [disabled]="savingEdit()" (click)="saveEdit()">
+                        {{ savingEdit() ? 'Saving…' : 'Save' }}
+                      </button>
+                      <button type="button" class="btn sm" [disabled]="savingEdit()" (click)="cancelEdit()">
+                        Cancel
+                      </button>
+                    </div>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+}
+@if (!loading() && !loadError() && students().length > 0 && viewMode() === 'list') {
+  <ul class="as-list">
+    @for (s of students(); track s.id) {
+      <li class="as-card" [class.as-card--open]="isExpanded(s.id)">
+        <div class="as-card-header">
+          <div class="as-card-quick">
+            <a
+              class="as-icon-btn"
+              [routerLink]="['/students', s.id, 'report']"
+              title="Student report"
+              aria-label="Open student report"
+            >
+              <svg class="as-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </a>
+            <a
+              class="as-icon-btn"
+              [routerLink]="['/students/admission']"
+              [queryParams]="{ edit: s.id }"
+              title="Full edit (admission form)"
+              aria-label="Full edit in admission form"
+            >
+              <svg class="as-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </a>
+          </div>
+          <button
+            type="button"
+            class="as-card-toggle"
+            [attr.aria-expanded]="isExpanded(s.id)"
+            (click)="toggleExpand(s.id)"
+          >
+            <span class="as-expand-btn as-expand-btn--inline">{{ isExpanded(s.id) ? '▾' : '▸' }}</span>
+            <div class="as-card-main">
+              <div class="as-card-title">
+                <strong>{{ s.full_name }}</strong>
+                <span class="as-card-adm">{{ s.admission_no }}</span>
+              </div>
+              <div class="as-card-meta">
+                <span class="as-pill">{{ sessionYearLabel(s) }}</span>
+                <span class="as-pill">{{ s.class_name }}{{ s.section ? ' · ' + s.section : '' }}</span>
+                @if (s.date_of_birth) {
+                  <span class="as-pill">DOB {{ s.date_of_birth }}</span>
+                }
+                @if (s.gender) {
+                  <span class="as-pill">{{ s.gender }}</span>
+                }
+              </div>
+              @if (s.parent_name || s.parent_phone) {
+                <p class="as-card-parent">
+                  {{ s.parent_name || '—' }}
+                  @if (s.parent_phone) {
+                    <span class="as-card-phone">{{ s.parent_phone }}</span>
+                  }
+                </p>
+              }
+            </div>
+          </button>
+        </div>
+        @if (isExpanded(s.id)) {
+          <div class="as-card-body">
+            <div class="as-accordion">
+              @if (editingId() !== s.id) {
+                <h4 class="as-accordion-title">Student details</h4>
+                <dl class="as-detail-dl as-detail-dl--multicolumn">
+                  <dt>Academic session</dt>
+                  <dd>{{ sessionYearLabel(s) }}</dd>
+                  <dt>Admission date (stored)</dt>
+                  <dd>{{ admissionDateIso(s) || '—' }}</dd>
+                  <dt>Class / section</dt>
+                  <dd>{{ s.class_name }} @if (s.section) { · {{ s.section }} }</dd>
+                  <dt>Parent / guardian</dt>
+                  <dd>{{ s.parent_name || '—' }}</dd>
+                  <dt>SMS / parent phone</dt>
+                  <dd>{{ s.parent_phone || '—' }}</dd>
+                  <dt>Religion</dt>
+                  <dd>{{ extraStr(s, 'religion') || '—' }}</dd>
+                  <dt>Blood group</dt>
+                  <dd>{{ extraStr(s, 'blood_group') || '—' }}</dd>
+                  <dt>Previous board roll no.</dt>
+                  <dd>{{ extraStr(s, 'previous_board_roll') || '—' }}</dd>
+                  <dt>Father mobile</dt>
+                  <dd>{{ extraStr(s, 'father_mobile') || '—' }}</dd>
+                  <dt>Mother mobile</dt>
+                  <dd>{{ extraStr(s, 'mother_mobile') || '—' }}</dd>
+                  <dt>Address</dt>
+                  <dd>{{ extraStr(s, 'address') || '—' }}</dd>
+                  @for (row of extraDisplayRowsRemaining(s); track row.label) {
+                    <dt>{{ row.label }}</dt>
+                    <dd>{{ row.value }}</dd>
+                  }
+                </dl>
+                <div class="as-accordion-actions">
+                  <button type="button" class="btn sm primary" (click)="startEdit(s)">Edit details</button>
+                  <a
+                    class="as-icon-btn as-icon-btn--lg"
+                    [routerLink]="['/students/admission']"
+                    [queryParams]="{ edit: s.id }"
+                    title="Full edit (admission form)"
+                    aria-label="Full edit in admission form"
+                  >
+                    <svg class="as-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </a>
+                  <button type="button" class="btn sm ghost" (click)="toggleExpand(s.id)">Collapse</button>
+                </div>
+              } @else {
+                <h4 class="as-accordion-title">Edit student</h4>
+                @if (draft(); as d) {
+                  <div class="as-edit-grid">
+                    <label>
+                      <span>Admission no. *</span>
+                      <input
+                        type="text"
+                        class="input"
+                        [ngModel]="d.admission_no"
+                        (ngModelChange)="patchDraft('admission_no', $event)"
+                      />
+                    </label>
+                    <label>
+                      <span>Full name *</span>
+                      <input
+                        type="text"
+                        class="input"
+                        [ngModel]="d.full_name"
+                        (ngModelChange)="patchDraft('full_name', $event)"
+                      />
+                    </label>
+                    <label>
+                      <span>Class *</span>
+                      <select
+                        class="input"
+                        [ngModel]="d.class_name"
+                        (ngModelChange)="patchDraft('class_name', $event)"
+                      >
+                        <option value="" disabled>Select</option>
+                        @for (c of schoolRef.classes(); track c.id) {
+                          <option [value]="c.name">{{ c.name }}</option>
+                        }
+                      </select>
+                    </label>
+                    <label>
+                      <span>Section</span>
+                      <select
+                        class="input"
+                        [ngModel]="d.section"
+                        (ngModelChange)="patchDraft('section', $event)"
+                      >
+                        <option value="">—</option>
+                        @for (letter of sectionLetters; track letter) {
+                          <option [value]="letter">{{ letter }}</option>
+                        }
+                      </select>
+                    </label>
+                    <label>
+                      <span>Date of birth</span>
+                      <input
+                        type="date"
+                        class="input"
+                        [ngModel]="d.date_of_birth"
+                        (ngModelChange)="patchDraft('date_of_birth', $event)"
+                      />
+                    </label>
+                    <label>
+                      <span>Gender</span>
+                      <select
+                        class="input"
+                        [ngModel]="d.gender"
+                        (ngModelChange)="patchDraft('gender', $event)"
+                      >
+                        <option value="">—</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </label>
+                    <label class="as-edit-span-2">
+                      <span>Parent / guardian name</span>
+                      <input
+                        type="text"
+                        class="input"
+                        [ngModel]="d.parent_name"
+                        (ngModelChange)="patchDraft('parent_name', $event)"
+                      />
+                    </label>
+                    <label class="as-edit-span-2">
+                      <span>Parent phone</span>
+                      <input
+                        type="text"
+                        class="input"
+                        [ngModel]="d.parent_phone"
+                        (ngModelChange)="patchDraft('parent_phone', $event)"
+                      />
+                    </label>
+                  </div>
+                }
+                @if (editError()) {
+                  <p class="err">{{ editError() }}</p>
+                }
+                <div class="as-accordion-actions">
+                  <button type="button" class="btn sm primary" [disabled]="savingEdit()" (click)="saveEdit()">
+                    {{ savingEdit() ? 'Saving…' : 'Save' }}
+                  </button>
+                  <button type="button" class="btn sm" [disabled]="savingEdit()" (click)="cancelEdit()">Cancel</button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+}
+
+@if (!loading() && !loadError() && hasAttemptedLoad() && totalCount() > 0) {
+  <ng-container
+    [ngTemplateOutlet]="rosterPagerTpl"
+    [ngTemplateOutletContext]="{ placement: 'bottom' }"
+  />
+}
+
+<ng-template #rosterPagerTpl let-placement="placement">
+  <nav
+    class="as-pager"
+    [class.as-pager--top]="placement === 'top'"
+    [class.as-pager--bottom]="placement === 'bottom'"
+    [attr.aria-label]="placement === 'top' ? 'Roster pagination, top' : 'Roster pagination, bottom'"
+  >
+    <p class="as-pager-info muted">
+      Showing <strong>{{ showingFrom() }}</strong>–<strong>{{ showingTo() }}</strong> of
+      <strong>{{ totalCount() }}</strong> students
+    </p>
+    <div class="as-pager-controls">
+      <label class="as-pager-size">
+        <span class="as-pager-size-label">Rows per page</span>
+        <select
+          class="input as-pager-select"
+          [ngModel]="pageSize()"
+          (ngModelChange)="onPageSizeChange($event)"
+        >
+          @for (z of pageSizeOptions; track z) {
+            <option [ngValue]="z">{{ z }}</option>
+          }
+        </select>
+      </label>
+      <div class="as-pager-nav" role="group" aria-label="Page navigation">
+        <button type="button" class="btn sm" [disabled]="pageIndex() <= 0 || loading()" (click)="goPrevPage()">
+          Previous
+        </button>
+        <div class="as-pager-page-chip">
+          <span class="sr-only">
+            Page {{ pageIndex() + 1 }} of {{ totalPages() }}
+          </span>
+          <span class="as-pager-page-visual" aria-hidden="true">
+            <span class="as-pager-page-label">Page</span>
+            <span class="as-pager-page-current">{{ pageIndex() + 1 }}</span>
+            <span class="as-pager-page-sep">/</span>
+            <span class="as-pager-page-max">{{ totalPages() }}</span>
+          </span>
+        </div>
+        <button
+          type="button"
+          class="btn sm"
+          [disabled]="pageIndex() >= totalPages() - 1 || loading()"
+          (click)="goNextPage()"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </nav>
+</ng-template>

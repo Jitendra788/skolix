@@ -1,0 +1,164 @@
+<div class="si-fullpage">
+  <div class="si-page-top">
+    <header class="page-head si-head">
+      <h1>Import students</h1>
+      <p class="lede">
+        Add many students at once from one file. Required columns:
+        <strong>admission_no</strong>, <strong>full_name</strong>, <strong>class_name</strong> (exactly as in School setup),
+        and <strong>date_of_admission</strong>. The Excel template includes a <strong>How_to_fill</strong> sheet.
+      </p>
+    </header>
+    <div class="si-top-actions">
+      <a class="btn sm" routerLink="/students/admission">New student</a>
+      <a class="btn sm ghost" routerLink="/students/all">All students</a>
+    </div>
+  </div>
+
+  <div class="si-steps" aria-label="Import steps">
+    <section class="si-panel si-panel--step" aria-labelledby="si-step-templates">
+      <div class="si-panel-head">
+        <span class="si-step-num">1</span>
+        <div class="si-panel-intro">
+          <h2 id="si-step-templates" class="si-panel-title">Download a template</h2>
+          <p class="si-panel-desc muted">
+            Use the sample row as a guide, then replace it with your data. Remove the sample row if you do not want it
+            imported.
+          </p>
+        </div>
+      </div>
+      <div class="si-template-btns">
+        <button type="button" class="btn sm si-template-btn" (click)="downloadImportTemplate('csv')">
+          Sample CSV
+        </button>
+        <button type="button" class="btn sm si-template-btn" (click)="downloadImportTemplate('xlsx')">
+          Sample Excel
+        </button>
+      </div>
+    </section>
+
+    <section class="si-panel si-panel--step" aria-labelledby="si-step-upload">
+      <div class="si-panel-head">
+        <span class="si-step-num">2</span>
+        <div class="si-panel-intro">
+          <h2 id="si-step-upload" class="si-panel-title">Upload your file</h2>
+          <p class="si-panel-desc muted">
+            One file per import. Accepted: <strong>.csv</strong> or <strong>.xlsx</strong>.
+          </p>
+        </div>
+      </div>
+
+      <div class="si-upload-shell">
+        <div class="si-upload-box adm-file-box">
+          <input
+            #importFileInput
+            id="siImportFile"
+            type="file"
+            class="adm-file-native"
+            accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            (change)="onImportFileChange($event)"
+          />
+          <label for="siImportFile" class="btn sm adm-file-btn si-choose-btn">Choose file</label>
+          <span class="adm-file-name si-file-hint" [class.si-file-hint--empty]="!selectedImportFile">
+            {{ selectedImportFile?.name || 'No file selected' }}
+          </span>
+        </div>
+        <div class="si-upload-actions">
+          <button
+            type="button"
+            class="btn sm ghost"
+            [disabled]="!selectedImportFile || bulkImportLoading"
+            (click)="clearImportSelection()"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            class="btn sm primary"
+            [disabled]="bulkImportLoading || !selectedImportFile"
+            (click)="runBulkImport()"
+          >
+            {{ bulkImportLoading ? 'Importing…' : 'Import students' }}
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  @if (bulkImportError) {
+    <p class="err si-alert">{{ bulkImportError }}</p>
+  }
+
+  @if (bulkImportResult) {
+    <section class="si-panel si-panel--results si-panel--step" aria-label="Import results">
+      <div class="si-results-step-head">
+        <span class="si-step-num">3</span>
+        <div class="si-results-head">
+          <div class="si-badges">
+            <span class="si-badge si-badge--ok">
+              {{ bulkImportResult.success_count }} saved
+            </span>
+            @if (bulkImportResult.failure_count > 0) {
+              <span class="si-badge si-badge--bad">
+                {{ bulkImportResult.failure_count }} failed
+              </span>
+            }
+            <span class="si-badge si-badge--muted">{{ bulkImportResult.total_rows }} rows in file</span>
+          </div>
+          <button type="button" class="btn sm ghost" (click)="dismissBulkImportSummary()">Dismiss</button>
+        </div>
+      </div>
+
+      @if (bulkImportResult.submitted.length) {
+        <h3 class="si-table-title">Submitted</h3>
+        <div class="si-table-wrap">
+          <table class="si-table">
+            <thead>
+              <tr>
+                <th>Row</th>
+                <th>Registration no.</th>
+                <th>Name</th>
+                <th>Class</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of bulkImportResult.submitted; track r.row_number + r.admission_no) {
+                <tr>
+                  <td>{{ r.row_number }}</td>
+                  <td>{{ r.admission_no }}</td>
+                  <td>{{ r.full_name }}</td>
+                  <td>{{ r.class_name }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (bulkImportResult.failed.length) {
+        <h3 class="si-table-title si-table-title--fail">Failed</h3>
+        <div class="si-table-wrap">
+          <table class="si-table si-table--fail">
+            <thead>
+              <tr>
+                <th>Row</th>
+                <th>Registration no.</th>
+                <th>Name</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of bulkImportResult.failed; track r.row_number + r.reason) {
+                <tr>
+                  <td>{{ r.row_number }}</td>
+                  <td>{{ r.admission_no || '—' }}</td>
+                  <td>{{ r.full_name || '—' }}</td>
+                  <td>{{ r.reason }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>

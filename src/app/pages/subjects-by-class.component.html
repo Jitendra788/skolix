@@ -1,0 +1,45 @@
+<header class="page-head">
+  <div class="sb-bc" aria-label="Breadcrumb">
+    <span>Subjects</span>
+    <span class="sb-bc-sep">|</span>
+    <svg class="sb-bc-home" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z" />
+    </svg>
+    <span class="sb-bc-here">Classes With Subjects</span>
+  </div>
+  <h1>Classes With Subjects</h1>
+  <p class="lede">
+    Each card lists subjects and marks for one class. Use <strong>Assign / edit</strong> to change them.
+  </p>
+</header>
+
+@if (err) {
+  <p class="err">{{ err }}</p>
+}
+
+<section class="sb-grid">
+  @for (row of overview; track row.class_id) {
+    <article class="sb-card">
+      <header class="sb-card-head">
+        <h2 class="sb-card-title">{{ row.class_name }}</h2>
+        <a class="btn sm primary" [routerLink]="['/subjects/assign']" [queryParams]="{ classId: row.class_id }">
+          Assign / edit
+        </a>
+      </header>
+      @if (row.subjects.length) {
+        <ul class="sb-list">
+          @for (s of row.subjects; track s.id) {
+            <li>
+              <span class="sb-subj">{{ s.subject_name }}</span>
+              <span class="sb-marks">{{ s.total_marks || '—' }}</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="sb-empty">No subjects yet.</p>
+      }
+    </article>
+  } @empty {
+    <p class="sb-empty sb-empty-wide">No classes found. Add classes under <strong>Classes</strong> first.</p>
+  }
+</section>

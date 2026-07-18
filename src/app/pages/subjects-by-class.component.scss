@@ -1,0 +1,78 @@
+.sb-bc {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.sb-bc-sep {
+  color: var(--border-strong);
+}
+.sb-bc-home {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--accent);
+}
+.sb-bc-here {
+  color: var(--text-secondary);
+}
+.sb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+.sb-card {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem 1.05rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+.sb-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+}
+.sb-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.sb-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+.sb-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+  &:last-child {
+    border-bottom: none;
+  }
+}
+.sb-subj {
+  font-weight: 600;
+  color: var(--text);
+}
+.sb-marks {
+  color: var(--muted);
+  font-weight: 600;
+}
+.sb-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.sb-empty-wide {
+  grid-column: 1 / -1;
+}

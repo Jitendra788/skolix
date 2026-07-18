@@ -1,0 +1,248 @@
+@if (report$ | async; as r) {
+  @if (r) {
+    <div class="student-report-page">
+      <header class="sr-top no-print">
+        <nav class="sr-crumb" aria-label="Breadcrumb">
+          <a routerLink="/students/admission">Students</a>
+          <span class="sr-crumb-sep" aria-hidden="true">|</span>
+          <a routerLink="/dashboard" class="sr-crumb-home" aria-label="Home">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </a>
+          <span class="sr-crumb-sep" aria-hidden="true">—</span>
+          <span class="sr-crumb-here">Student Report</span>
+        </nav>
+        <button type="button" class="sr-pdf-btn no-print" (click)="printPdf()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+          Get PDF
+        </button>
+      </header>
+
+      <div class="sr-layout">
+        <aside class="sr-profile">
+          <div class="sr-avatar" aria-hidden="true">{{ initials(r) }}</div>
+          <h1 class="sr-name">{{ r.profile.full_name }}</h1>
+          <dl class="sr-facts">
+            <div>
+              <dt>Registration No.</dt>
+              <dd>{{ r.profile.admission_no }}</dd>
+            </div>
+            <div>
+              <dt>Date of Admission</dt>
+              <dd>{{ r.profile.date_of_admission || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Class</dt>
+              <dd>{{ r.profile.class_name }}{{ r.profile.section ? ' · ' + r.profile.section : '' }}</dd>
+            </div>
+            <div>
+              <dt>Family</dt>
+              <dd>{{ r.profile.parent_name || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Discount in Fee</dt>
+              <dd>{{ r.profile.discount_fee_percent }} %</dd>
+            </div>
+            <div>
+              <dt>Date Of Birth</dt>
+              <dd>{{ formatDob(r.profile.date_of_birth) }}</dd>
+            </div>
+            <div>
+              <dt>Gender</dt>
+              <dd>—</dd>
+            </div>
+            <div>
+              <dt>Blood Group</dt>
+              <dd>—</dd>
+            </div>
+          </dl>
+        </aside>
+
+        <div class="sr-sections">
+          <section class="sr-card" aria-labelledby="sr-a1">
+            <h2 id="sr-a1" class="sr-card-title"><span class="sr-num">1</span> Attendance Report</h2>
+            <div class="sr-att-grid">
+              <div class="sr-donut-wrap">
+                <div class="sr-donut" [style.background]="donutGradient(r.attendance)"></div>
+              </div>
+              <div class="sr-gauges">
+                <div class="sr-gauge">
+                  <div class="sr-gauge-ring" [style.background]="gaugeStyle(r.attendance.overall_percent)"></div>
+                  <div class="sr-gauge-inner">
+                    <strong>{{ r.attendance.overall_percent }}%</strong>
+                    <span>Overall</span>
+                  </div>
+                </div>
+                <div class="sr-gauge">
+                  <div class="sr-gauge-ring" [style.background]="gaugeStyle(r.attendance.month_percent)"></div>
+                  <div class="sr-gauge-inner">
+                    <strong>{{ r.attendance.month_percent }}%</strong>
+                    <span>{{ r.attendance.month_label }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="sr-day-badges">
+              <span class="sr-badge {{ dayBadgeClass(r.attendance.today.status) }}">
+                Today: {{ dayBadgeText(r.attendance.today.status) }}
+              </span>
+              <span class="sr-badge {{ dayBadgeClass(r.attendance.yesterday.status) }}">
+                Yesterday: {{ dayBadgeText(r.attendance.yesterday.status) }}
+              </span>
+            </div>
+            <div class="sr-metrics">
+              <div class="sr-metric present">
+                <span class="sr-metric-label">PRESENTS</span>
+                <div class="sr-metric-row">
+                  <span>Total <strong>{{ r.attendance.presents_total }}</strong></span>
+                  <span>This month <strong>{{ r.attendance.presents_this_month }}</strong></span>
+                </div>
+              </div>
+              <div class="sr-metric leave">
+                <span class="sr-metric-label">LEAVES</span>
+                <div class="sr-metric-row">
+                  <span>Total <strong>{{ r.attendance.leaves_total }}</strong></span>
+                  <span>This month <strong>{{ r.attendance.leaves_this_month }}</strong></span>
+                </div>
+              </div>
+              <div class="sr-metric absent">
+                <span class="sr-metric-label">ABSENTS</span>
+                <div class="sr-metric-row">
+                  <span>Total <strong>{{ r.attendance.absents_total }}</strong></span>
+                  <span>This month <strong>{{ r.attendance.absents_this_month }}</strong></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sr-card" aria-labelledby="sr-a2">
+            <h2 id="sr-a2" class="sr-card-title"><span class="sr-num">2</span> Class Tests Report</h2>
+            @if (r.class_tests.length) {
+              @for (sub of r.class_tests; track sub.subject) {
+                <div class="sr-test-row">
+                  <div>
+                    <h3 class="sr-subject">{{ sub.subject }}</h3>
+                    <div class="sr-test-meta">
+                      <span>TOTAL CLASS TESTS ({{ sub.total_tests }})</span>
+                      <span>TOTAL MARKS ({{ sub.total_marks }})</span>
+                      <span>OBTAINED MARKS ({{ sub.obtained_marks }})</span>
+                    </div>
+                    <div class="sr-bar"><span [style.width.%]="sub.percent"></span></div>
+                  </div>
+                  <div class="sr-mini-gauge" [style.background]="gaugeStyle(sub.percent)">
+                    <span>{{ sub.percent }}%</span>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="sr-test-row">
+                <div>
+                  <h3 class="sr-subject">—</h3>
+                  <div class="sr-test-meta">
+                    <span>TOTAL CLASS TESTS (0)</span>
+                    <span>TOTAL MARKS (0)</span>
+                    <span>OBTAINED MARKS (0)</span>
+                  </div>
+                  <div class="sr-bar"><span [style.width.%]="0"></span></div>
+                </div>
+                <div class="sr-mini-gauge" [style.background]="gaugeStyle(0)">
+                  <span>0%</span>
+                </div>
+              </div>
+            }
+          </section>
+
+          <section class="sr-card sr-card-center" aria-labelledby="sr-a3">
+            <h2 id="sr-a3" class="sr-card-title"><span class="sr-num">3</span> Examination Report</h2>
+            @if (r.examinations.has_records) {
+              <p>Examination data will appear here when marks are recorded.</p>
+            } @else {
+              <div class="sr-empty-illus" role="img" aria-hidden="true">
+                <svg viewBox="0 0 120 100" width="120" height="100" fill="none">
+                  <ellipse cx="60" cy="88" rx="40" ry="6" fill="#ede9fe" />
+                  <rect x="38" y="42" width="44" height="36" rx="4" fill="#f5f3ff" stroke="#a78bfa" stroke-width="2" />
+                  <rect x="28" y="52" width="18" height="22" rx="2" fill="#ede9fe" stroke="#c4b5fd" />
+                  <circle cx="52" cy="28" r="10" fill="#ddd6fe" stroke="#7c3aed" stroke-width="2" />
+                  <path d="M48 58h24M48 66h18" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+              <p class="sr-empty-msg">
+                <svg class="sr-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                {{ r.examinations.message }}
+              </p>
+            }
+          </section>
+
+          <section class="sr-card sr-fee-card" aria-labelledby="sr-a4">
+            <h2 id="sr-a4" class="sr-card-title"><span class="sr-num">4</span> Fee Report</h2>
+            @if (r.fee.has_record) {
+              <div class="sr-fee-row">
+                <div class="sr-fee-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="6" width="20" height="14" rx="2" />
+                    <path d="M2 10h20" />
+                  </svg>
+                </div>
+                <div class="sr-fee-body">
+                  <p class="sr-fee-amt">₹ {{ r.fee.period_due | number : '1.0-0' }}</p>
+                  <p class="sr-fee-caption">Fees of {{ r.fee.period_label }}</p>
+                  @if (r.fee.period_paid > 0) {
+                    <p class="sr-fee-paid">Paid: ₹ {{ r.fee.period_paid | number : '1.0-0' }} · Balance: ₹ {{ r.fee.balance | number : '1.0-0' }}</p>
+                  }
+                  @if (feeStatusLabel(r.fee.status)) {
+                    <span class="sr-fee-pill {{ feeStatusClass(r.fee.status) }}">{{ feeStatusLabel(r.fee.status) }}</span>
+                  }
+                </div>
+              </div>
+            } @else {
+              <p class="sr-empty-msg">No fee ledger entry for this student yet.</p>
+            }
+          </section>
+
+          <section class="sr-card" aria-labelledby="sr-a5">
+            <h2 id="sr-a5" class="sr-card-title"><span class="sr-num">5</span> Promotion History</h2>
+            @if (r.promotions.length) {
+              <div class="sr-promote-table-wrap">
+                <table class="sr-promote-table">
+                  <thead>
+                    <tr>
+                      <th>From</th>
+                      <th>To</th>
+                      <th>Changed at</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (p of r.promotions; track p.changed_at + p.from_class + p.to_class) {
+                      <tr>
+                        <td>{{ p.from_class || '—' }}</td>
+                        <td>{{ p.to_class || '—' }}</td>
+                        <td>{{ formatPromotionDateTime(p.changed_at) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="sr-empty-msg">No promotion history found for this student.</p>
+            }
+          </section>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <p class="sr-load-err no-print">Could not load this student report. <a routerLink="/students/admission">Back to admission</a></p>
+  }
+} @else {
+  <p class="sr-loading no-print">Loading…</p>
+}

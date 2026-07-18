@@ -1,0 +1,212 @@
+<header class="page-head">
+  <h1>School setup</h1>
+  <p class="lede">
+    Maintain <strong>academic years</strong>, <strong>fee heads</strong>, and <strong>fee frequencies</strong> used across the app.
+    Manage the class list under <strong>Classes → All Classes</strong> in the sidebar.
+  </p>
+</header>
+
+<nav class="setup-tabs" aria-label="School setup sections">
+  <div class="setup-tabs-inner" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="setupTab === 'years'"
+      [class.active]="setupTab === 'years'"
+      (click)="setupTab = 'years'"
+    >
+      Academic years
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="setupTab === 'fee_heads'"
+      [class.active]="setupTab === 'fee_heads'"
+      (click)="setupTab = 'fee_heads'"
+    >
+      Fee heads
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="setupTab === 'fee_frequencies'"
+      [class.active]="setupTab === 'fee_frequencies'"
+      (click)="setupTab = 'fee_frequencies'"
+    >
+      Fee frequencies
+    </button>
+  </div>
+</nav>
+
+@if (setupTab === 'years') {
+<section class="crud-panel">
+  <h2>Academic years</h2>
+  <div class="form-grid">
+    <label>
+      <span>Label</span>
+      <input type="text" [(ngModel)]="yearLabel" class="input" placeholder="2025-26" />
+    </label>
+    <label>
+      <span>Sort order</span>
+      <input type="number" [(ngModel)]="yearSort" class="input" />
+    </label>
+    <label class="check-row">
+      <input type="checkbox" [(ngModel)]="yearCurrent" />
+      <span>Mark as current (clears other “current” flags)</span>
+    </label>
+  </div>
+  @if (yearErr) {
+    <p class="err">{{ yearErr }}</p>
+  }
+  <div class="form-actions">
+    <button type="button" class="btn primary sm" [disabled]="yearBusy" (click)="saveYear()">
+      {{ yearBusy ? 'Saving…' : editingYear ? 'Update year' : 'Add year' }}
+    </button>
+    @if (editingYear) {
+      <button type="button" class="btn sm ghost" (click)="cancelYear()">Cancel</button>
+    }
+  </div>
+
+  <div class="table-wrap setup-table">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Label</th>
+          <th>Order</th>
+          <th>Current</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (y of schoolRef.academicYears(); track y.id) {
+          <tr>
+            <td>{{ y.label }}</td>
+            <td>{{ y.sort_order }}</td>
+            <td>{{ y.is_current ? 'Yes' : '—' }}</td>
+            <td class="row-actions">
+              <button type="button" class="btn sm" (click)="startEditYear(y)">Edit</button>
+              <button type="button" class="btn sm danger" (click)="removeYear(y)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="empty">No academic years. Add above or restart API to seed defaults.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+}
+
+@if (setupTab === 'fee_heads') {
+<section class="crud-panel">
+  <h2>Fee heads</h2>
+  <p class="panel-hint">Used in fee structure (e.g. Tuition Fee, Transport Fee). Order controls dropdown sorting.</p>
+  <div class="form-grid">
+    <label>
+      <span>Name</span>
+      <input type="text" [(ngModel)]="headName" class="input" placeholder="e.g. Library Fee" />
+    </label>
+    <label>
+      <span>Sort order</span>
+      <input type="number" [(ngModel)]="headSort" class="input" />
+    </label>
+  </div>
+  @if (headErr) {
+    <p class="err">{{ headErr }}</p>
+  }
+  <div class="form-actions">
+    <button type="button" class="btn primary sm" [disabled]="headBusy" (click)="saveHead()">
+      {{ headBusy ? 'Saving…' : editingHead ? 'Update fee head' : 'Add fee head' }}
+    </button>
+    @if (editingHead) {
+      <button type="button" class="btn sm ghost" (click)="cancelHead()">Cancel</button>
+    }
+  </div>
+
+  <div class="table-wrap setup-table">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Order</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (h of schoolRef.feeHeads(); track h.id) {
+          <tr>
+            <td>{{ h.name }}</td>
+            <td>{{ h.sort_order }}</td>
+            <td class="row-actions">
+              <button type="button" class="btn sm" (click)="startEditHead(h)">Edit</button>
+              <button type="button" class="btn sm danger" (click)="removeHead(h)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="empty">No fee heads. Add above or restart API to seed defaults.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+}
+
+@if (setupTab === 'fee_frequencies') {
+<section class="crud-panel">
+  <h2>Fee frequencies</h2>
+  <p class="panel-hint">Labels saved on each fee structure row (e.g. Annual, Monthly).</p>
+  <div class="form-grid">
+    <label>
+      <span>Name</span>
+      <input type="text" [(ngModel)]="freqName" class="input" placeholder="e.g. Per term" />
+    </label>
+    <label>
+      <span>Sort order</span>
+      <input type="number" [(ngModel)]="freqSort" class="input" />
+    </label>
+  </div>
+  @if (freqErr) {
+    <p class="err">{{ freqErr }}</p>
+  }
+  <div class="form-actions">
+    <button type="button" class="btn primary sm" [disabled]="freqBusy" (click)="saveFreq()">
+      {{ freqBusy ? 'Saving…' : editingFreq ? 'Update frequency' : 'Add frequency' }}
+    </button>
+    @if (editingFreq) {
+      <button type="button" class="btn sm ghost" (click)="cancelFreq()">Cancel</button>
+    }
+  </div>
+
+  <div class="table-wrap setup-table">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Order</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (f of schoolRef.feeFrequencies(); track f.id) {
+          <tr>
+            <td>{{ f.name }}</td>
+            <td>{{ f.sort_order }}</td>
+            <td class="row-actions">
+              <button type="button" class="btn sm" (click)="startEditFreq(f)">Edit</button>
+              <button type="button" class="btn sm danger" (click)="removeFreq(f)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="empty">No frequencies. Add above or restart API to seed defaults.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+}

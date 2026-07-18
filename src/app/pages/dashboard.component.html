@@ -1,0 +1,319 @@
+@if (vm$ | async; as vm) {
+  <div class="esk-dash">
+    <header class="esk-dash-head">
+      <h1>Dashboard</h1>
+      <p class="esk-dash-sub">Overview of attendance, roster, and notices — similar layout to your reference admin home.</p>
+    </header>
+
+    <div class="esk-stat-row">
+      <article class="esk-stat-card esk-stat-a">
+        <div class="esk-stat-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        </div>
+        <div class="esk-stat-body">
+          <span class="esk-stat-title">Total students</span>
+          <strong class="esk-stat-value">{{ vm.students }}</strong>
+          <span class="esk-stat-foot">On roster</span>
+        </div>
+      </article>
+
+      <article class="esk-stat-card esk-stat-b">
+        <div class="esk-stat-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>
+        </div>
+        <div class="esk-stat-body">
+          <span class="esk-stat-title">Faculty</span>
+          <strong class="esk-stat-value">{{ vm.faculty }}</strong>
+          <span class="esk-stat-foot">On record</span>
+        </div>
+      </article>
+
+      <article class="esk-stat-card esk-stat-d">
+        <div class="esk-stat-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        </div>
+        <div class="esk-stat-body">
+          <span class="esk-stat-title">API status</span>
+          <strong class="esk-stat-value esk-stat-ok" [class.off]="vm.health !== 'ok'">
+            {{ vm.health === 'ok' ? 'Live' : 'Offline' }}
+          </strong>
+          <span class="esk-stat-foot">Backend</span>
+        </div>
+      </article>
+    </div>
+
+    <div class="esk-hero-row">
+      <section class="esk-welcome">
+        <div class="esk-welcome-text">
+          <h2>Welcome to admin dashboard</h2>
+          <p>
+            @if (!vm.profileEmail) {
+              <span class="esk-welcome-warn"
+                >Complete your institute profile with a working email so parents and staff can reach you.</span
+              >
+            } @else {
+              Signed in context for <strong>{{ vm.instituteName || 'your school' }}</strong>. Keep the API on
+              <code>127.0.0.1:8000</code> for live figures.
+            }
+          </p>
+          <a routerLink="/settings/school-setup" class="esk-welcome-link">School setup →</a>
+        </div>
+        <div class="esk-welcome-art" aria-hidden="true"></div>
+      </section>
+      <aside class="esk-review-card" aria-label="Quick tip">
+        <span class="esk-review-badge">Tip</span>
+        <p class="esk-review-text">Share feedback from the <a routerLink="/notices">notice board</a> so everyone stays aligned.</p>
+      </aside>
+    </div>
+
+    <div class="esk-dash-grid">
+      <div class="esk-dash-main">
+        <section class="esk-panel esk-panel-tight">
+          <div class="esk-panel-head">
+            <h2>Statistics</h2>
+            <span class="esk-panel-hint">Students by class</span>
+            <button type="button" class="esk-chev" disabled aria-hidden="true">&lsaquo;</button>
+          </div>
+          @if (vm.classRows.length === 0) {
+            <p class="esk-muted">No students on roster yet.</p>
+          } @else {
+            <div class="esk-bar-legend"><span class="esk-lg-stu">Students</span></div>
+            <div class="esk-hbar-list">
+              @for (r of vm.classRows; track r.class_name) {
+                <div class="esk-hbar-row">
+                  <span class="esk-hbar-label">{{ r.class_name }}</span>
+                  <div class="esk-hbar-track">
+                    <div
+                      class="esk-hbar-fill"
+                      [style.width.%]="(100 * r.count) / (vm.students || 1)"
+                    ></div>
+                  </div>
+                  <span class="esk-hbar-val">{{ r.count }}</span>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="esk-panel esk-panel-tight">
+          <div class="esk-panel-head">
+            <h2>Notices at a glance</h2>
+            <span class="esk-panel-badge">{{ vm.notices.length }} total</span>
+          </div>
+          @if (vm.notices.length === 0) {
+            <p class="esk-muted">No notices yet.</p>
+          } @else {
+            <ul class="esk-notice-list esk-notice-compact">
+              @for (n of vm.notices.slice(0, 4); track n.id) {
+                <li [class.pinned]="n.pinned">
+                  <strong>{{ n.title }}</strong>
+                  <p>{{ n.body }}</p>
+                  <span class="meta">{{ n.created_at | date: 'medium' }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <div class="esk-triple-row">
+          <section class="esk-subcard esk-sub-abs">
+            <div class="esk-subcard-head">
+              <h3>Today absent students</h3>
+              <button type="button" class="esk-chev" disabled aria-hidden="true">&lsaquo;</button>
+            </div>
+            @if (!vm.summary || !vm.summary.student_attendance.marked) {
+              <div class="esk-subcard-empty">
+                <span class="esk-emo" aria-hidden="true">&#128577;</span>
+                <p>Attendance not marked yet!</p>
+              </div>
+            } @else if (vm.summary.absent_students_today.length === 0) {
+              <p class="esk-subcard-ok">No absences recorded for today.</p>
+            } @else {
+              <ul class="esk-mini-list">
+                @for (a of vm.summary.absent_students_today; track a.admission_no) {
+                  <li>
+                    <span class="esk-mini-id">{{ a.admission_no }}</span>
+                    <span class="esk-mini-name">{{ a.full_name }}</span>
+                    <span class="esk-mini-cl">{{ a.class_name }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          <section class="esk-subcard esk-sub-emp">
+            <div class="esk-subcard-head">
+              <h3>Today present employees</h3>
+              <button type="button" class="esk-chev" disabled aria-hidden="true">&lsaquo;</button>
+            </div>
+            @if (!vm.summary || !vm.summary.employee_attendance.marked) {
+              <div class="esk-subcard-empty">
+                <span class="esk-emo" aria-hidden="true">&#128577;</span>
+                <p>Attendance not marked yet!</p>
+              </div>
+            } @else {
+              <p class="esk-subcard-ok">{{ vm.summary.employee_attendance.present_pct }}% present</p>
+            }
+          </section>
+
+          <section class="esk-subcard esk-sub-adm">
+            <div class="esk-subcard-head">
+              <h3>New admissions</h3>
+              <button type="button" class="esk-chev" disabled aria-hidden="true">&lsaquo;</button>
+            </div>
+            @if (!vm.summary || vm.summary.new_admissions.length === 0) {
+              <p class="esk-muted">No roster entries yet.</p>
+            } @else {
+              <ul class="esk-adm-list">
+                @for (s of vm.summary.new_admissions; track s.admission_no) {
+                  <li>
+                    <div class="esk-adm-av" aria-hidden="true">{{ initials(s.full_name) }}</div>
+                    <div class="esk-adm-meta">
+                      <span class="esk-adm-id">{{ s.admission_no }}</span>
+                      <span class="esk-adm-name">{{ s.full_name }}</span>
+                      <span class="esk-adm-cl">{{ s.class_name }}</span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </div>
+      </div>
+
+      <aside class="esk-dash-side">
+        <section class="esk-panel esk-panel-bars">
+          <div class="esk-pbar">
+            <div class="esk-pbar-h">
+              <span>Today present students</span>
+              @if (vm.summary && vm.summary.student_attendance.marked) {
+                <strong>{{ vm.summary.student_attendance.present_pct }}%</strong>
+              } @else {
+                <strong>—</strong>
+              }
+            </div>
+            <div class="esk-pbar-track">
+              <div
+                class="esk-pbar-fill"
+                [style.width.%]="
+                  vm.summary && vm.summary.student_attendance.marked
+                    ? vm.summary.student_attendance.present_pct
+                    : 0
+                "
+              ></div>
+            </div>
+          </div>
+          <div class="esk-pbar">
+            <div class="esk-pbar-h">
+              <span>Today present employees</span>
+              @if (vm.summary && vm.summary.employee_attendance.marked) {
+                <strong>{{ vm.summary.employee_attendance.present_pct }}%</strong>
+              } @else {
+                <strong>0%</strong>
+              }
+            </div>
+            <div class="esk-pbar-track">
+              <div
+                class="esk-pbar-fill alt"
+                [style.width.%]="
+                  vm.summary && vm.summary.employee_attendance.marked
+                    ? vm.summary.employee_attendance.present_pct
+                    : 0
+                "
+              ></div>
+            </div>
+          </div>
+        </section>
+
+        <a routerLink="/whatsapp" class="esk-promo sms">
+          <div class="esk-promo-body">
+            <strong>Messaging</strong>
+            <span>Use WhatsApp broadcasts to reach parents quickly.</span>
+          </div>
+          <div class="esk-promo-art" aria-hidden="true"></div>
+        </a>
+
+        <section class="esk-promo desk">
+          <div class="esk-desk-inner">
+            <strong>Desktop workspace</strong>
+            <p>For the best layout on attendance and roster tasks, use this portal on a wide screen or snap the window half-screen.</p>
+            <a routerLink="/attendance" class="esk-desk-btn">Attendance →</a>
+          </div>
+        </section>
+
+        <section class="esk-panel esk-cal">
+          <div class="esk-cal-head">
+            <button type="button" class="esk-cal-nav" (click)="calNav(-1)" aria-label="Previous month">&lsaquo;</button>
+            <div class="esk-cal-titles">
+              <span class="esk-cal-m">{{ calTitle() }}</span>
+              @if (calSubLabel()) {
+                <span class="esk-cal-d">{{ calSubLabel() }}</span>
+              }
+            </div>
+            <button type="button" class="esk-cal-nav" (click)="calNav(1)" aria-label="Next month">&rsaquo;</button>
+          </div>
+          <div class="esk-cal-grid">
+            @for (d of ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']; track d) {
+              <span class="esk-cal-dow">{{ d }}</span>
+            }
+            @for (w of calendarWeeks(); track $index) {
+              @for (c of w; track $index) {
+                <span
+                  class="esk-cal-cell"
+                  [class.out]="c.day === null"
+                  [class.today]="c.isToday"
+                  [attr.title]="c.holi || null"
+                >
+                  {{ c.day !== null ? c.day : '' }}
+                </span>
+              }
+            }
+          </div>
+        </section>
+
+        <div class="esk-milestone-block esk-milestone-side">
+          <h3 class="esk-milestone-title">Birthdays &amp; school dates</h3>
+          <p class="esk-milestone-hint">
+            <a routerLink="/settings/institute-profile">Establishment date</a> ·
+            <a routerLink="/students/admission">Student DOB</a> ·
+            <a routerLink="/faculty">Staff DOB</a>
+          </p>
+          @if (vm.milestones.length === 0) {
+            <p class="esk-muted esk-milestone-empty">No milestones in the next 90 days.</p>
+          } @else {
+            <ul class="esk-milestone-list">
+              @for (m of vm.milestones.slice(0, 6); track m.title + m.kind + m.on.getTime()) {
+                <li [class]="'esk-ms ' + m.kind">
+                  <div class="esk-ms-date">
+                    <span class="esk-ms-day">{{ m.on | date: 'd MMM' }}</span>
+                    @if (m.daysUntil === 0) {
+                      <span class="esk-ms-badge">Today</span>
+                    } @else if (m.daysUntil === 1) {
+                      <span class="esk-ms-badge">Tmrw</span>
+                    } @else {
+                      <span class="esk-ms-in">{{ m.daysUntil }}d</span>
+                    }
+                  </div>
+                  <div class="esk-ms-body">
+                    <strong>{{ m.title }}</strong>
+                    <span class="esk-ms-detail">{{ m.detail }}</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </aside>
+    </div>
+  </div>
+}

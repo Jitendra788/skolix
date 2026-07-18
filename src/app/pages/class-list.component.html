@@ -1,0 +1,215 @@
+<header class="page-head">
+  <h1>All Classes</h1>
+  <p class="lede">
+    Each card shows students, gender mix, tuition, teacher, and sections. Drag the <strong>⋮⋮</strong> handle to change
+    class order (saved automatically). Use the pencil to edit details, or <strong>Edit sections</strong> for A–F.
+    <strong>New Class</strong> or <strong>Add New</strong> creates a class.
+  </p>
+</header>
+
+<section class="cl-gallery" aria-labelledby="cl-gallery-title">
+  <div class="cl-grid-head" id="cl-gallery-title">
+    <span class="cl-grid-head-t">Classes</span>
+    <span class="cl-grid-head-sep" aria-hidden="true">|</span>
+    <svg class="cl-ico-home" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"
+      />
+    </svg>
+    <span class="cl-grid-head-sub">All Classes</span>
+  </div>
+
+  <div class="cl-grid-outer">
+    <div
+      class="cl-grid-dnd"
+      cdkDropList
+      [cdkDropListData]="orderedClasses"
+      (cdkDropListDropped)="onClassDrop($event)"
+    >
+      @for (c of orderedClasses; track c.id) {
+      <article class="cl-sum-card" cdkDrag [cdkDragDisabled]="dragLocked">
+        <header class="cl-sum-head">
+          <button
+            type="button"
+            class="cl-drag-handle"
+            cdkDragHandle
+            [disabled]="dragLocked"
+            aria-label="Drag to reorder class"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <circle cx="9" cy="8" r="1.35" />
+              <circle cx="15" cy="8" r="1.35" />
+              <circle cx="9" cy="12" r="1.35" />
+              <circle cx="15" cy="12" r="1.35" />
+              <circle cx="9" cy="16" r="1.35" />
+              <circle cx="15" cy="16" r="1.35" />
+            </svg>
+          </button>
+          <h2 class="cl-sum-name">{{ c.name }}</h2>
+          <div class="cl-sum-tools">
+            <a class="cl-ico-btn cl-ico-edit" [routerLink]="['/classes', c.id, 'edit']" aria-label="Edit class">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                />
+              </svg>
+            </a>
+            <button
+              type="button"
+              class="cl-ico-btn cl-ico-del"
+              (click)="removeClass(c)"
+              aria-label="Delete class"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                />
+              </svg>
+            </button>
+          </div>
+        </header>
+        @let st = statsFor(c.name);
+        <div class="cl-sum-mid">
+          <div class="cl-sum-count">
+            <span class="cl-sum-num">{{ st.total }}</span>
+            <span class="cl-sum-lbl">STUDENTS</span>
+          </div>
+          <svg class="cl-ico-cap" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 3 2 8l10 5 8-4.09V17h2V8L12 3zm0 11.09L6.55 9.82 12 7l5.45 2.82L12 14.09zM4 13v5l8 4 8-4v-5l-8 4-8-4z"
+            />
+          </svg>
+        </div>
+        <div class="cl-donuts">
+          <div class="cl-donut">
+            <svg class="cl-ring" viewBox="0 0 36 36" aria-hidden="true">
+              <circle cx="18" cy="18" r="15.9155" fill="none" class="cl-ring-track" stroke-width="3" />
+              @if (pct(st.boys, st.total) > 0) {
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15.9155"
+                  fill="none"
+                  class="cl-ring-seg"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  transform="rotate(-90 18 18)"
+                  [attr.stroke-dasharray]="ringDash(pct(st.boys, st.total))"
+                />
+              }
+            </svg>
+            <p class="cl-donut-lbl">{{ pct(st.boys, st.total) }}% Boys {{ st.boys }}</p>
+          </div>
+          <div class="cl-donut">
+            <svg class="cl-ring" viewBox="0 0 36 36" aria-hidden="true">
+              <circle cx="18" cy="18" r="15.9155" fill="none" class="cl-ring-track" stroke-width="3" />
+              @if (pct(st.girls, st.total) > 0) {
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15.9155"
+                  fill="none"
+                  class="cl-ring-seg cl-ring-seg-alt"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  transform="rotate(-90 18 18)"
+                  [attr.stroke-dasharray]="ringDash(pct(st.girls, st.total))"
+                />
+              }
+            </svg>
+            <p class="cl-donut-lbl">{{ pct(st.girls, st.total) }}% Girls {{ st.girls }}</p>
+          </div>
+          <div class="cl-donut">
+            <svg class="cl-ring" viewBox="0 0 36 36" aria-hidden="true">
+              <circle cx="18" cy="18" r="15.9155" fill="none" class="cl-ring-track" stroke-width="3" />
+              @if (pct(st.na, st.total) > 0) {
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15.9155"
+                  fill="none"
+                  class="cl-ring-seg cl-ring-seg-na"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  transform="rotate(-90 18 18)"
+                  [attr.stroke-dasharray]="ringDash(pct(st.na, st.total))"
+                />
+              }
+            </svg>
+            <p class="cl-donut-lbl">{{ pct(st.na, st.total) }}% N/A {{ st.na }}</p>
+          </div>
+        </div>
+
+        <dl class="cl-card-fees">
+          <div class="cl-card-fee-row">
+            <dt>Tuition / mo</dt>
+            <dd>{{ c.monthly_tuition?.trim() ? c.monthly_tuition : '—' }}</dd>
+          </div>
+          <div class="cl-card-fee-row">
+            <dt>Teacher</dt>
+            <dd>{{ c.class_teacher?.trim() ? c.class_teacher : '—' }}</dd>
+          </div>
+        </dl>
+
+        <div class="cl-card-secs">
+          <div class="cl-card-secs-top">
+            <span class="cl-card-secs-title">Sections</span>
+            @if (sectionEditorId !== c.id) {
+              <button type="button" class="cl-sec-edit-txt" (click)="openSectionEditor(c)">Edit sections</button>
+            }
+          </div>
+
+          @if (sectionEditorId === c.id) {
+            <p class="cl-section-hint cl-section-hint-tight">
+              Toggle A–F (order A→F). Duplicates in one save are rejected by the server.
+            </p>
+            @if (sectionErr) {
+              <p class="err cl-sec-err">{{ sectionErr }}</p>
+            }
+            <div class="cl-preset-row" role="group" [attr.aria-label]="'Sections for ' + c.name">
+              @for (letter of sectionPresets; track letter) {
+                <button
+                  type="button"
+                  class="cl-pill"
+                  [class.cl-pill-on]="sectionEditorSet.has(letter)"
+                  (click)="toggleEditorSection(letter)"
+                >
+                  {{ letter }}
+                </button>
+              }
+            </div>
+            <div class="cl-editor-actions">
+              <button type="button" class="btn primary sm" [disabled]="sectionBusy" (click)="saveSections()">
+                {{ sectionBusy ? 'Saving…' : 'Save sections' }}
+              </button>
+              <button type="button" class="btn sm ghost" [disabled]="sectionBusy" (click)="closeSectionEditor()">
+                Cancel
+              </button>
+            </div>
+          } @else {
+            @if (c.sections?.length) {
+              <div class="cl-badges">
+                @for (s of c.sections; track s) {
+                  <span class="cl-badge">{{ s }}</span>
+                }
+              </div>
+            } @else {
+              <p class="cl-muted cl-sec-none">No sections yet.</p>
+            }
+          }
+        </div>
+      </article>
+      }
+    </div>
+    <a class="cl-sum-card cl-add-slot" routerLink="/classes/new">
+      <svg class="cl-ico-plus" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+      </svg>
+      <span class="cl-add-slot-t">Add New</span>
+    </a>
+  </div>
+</section>

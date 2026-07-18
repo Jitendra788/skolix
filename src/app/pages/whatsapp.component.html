@@ -1,0 +1,139 @@
+<header class="page-head">
+  <h1>Messaging</h1>
+  <p class="lede">
+    Queue updates for a class. With Meta credentials in backend <code>.env</code>, group sends use WhatsApp Cloud API;
+    otherwise rows stay <code>sent_simulated</code>.
+  </p>
+  @if (waModeHint) {
+    <p class="lede wa-mode">{{ waModeHint }}</p>
+  }
+</header>
+
+<div class="seg-tabs">
+  <button type="button" class="btn" [class.primary]="tab === 'group'" (click)="setTab('group')">
+    Group Message
+  </button>
+  <button type="button" class="btn" [class.primary]="tab === 'single'" (click)="setTab('single')">
+    Single Log Entry
+  </button>
+  <button type="button" class="btn" [class.primary]="tab === 'due'" (click)="setTab('due')">
+    Due Fees Reminder
+  </button>
+  <button type="button" class="btn" [class.primary]="tab === 'sms'" (click)="setTab('sms')">
+    Text SMS
+  </button>
+</div>
+
+<div class="panel-form">
+  @if (tab === 'sms') {
+    <label>
+      <span>Phone number</span>
+      <input [(ngModel)]="smsNumber" class="input" placeholder="+918302095185" />
+    </label>
+    <label class="grow">
+      <span>SMS text</span>
+      <textarea
+        [(ngModel)]="smsMessage"
+        rows="3"
+        class="input"
+        placeholder="SMS text… Optional: {school_name}, {school_phone}, {sender_name}"
+      ></textarea>
+    </label>
+    <button type="button" class="btn primary" (click)="sendSms()" [disabled]="sending">
+      {{ sending ? 'Queueing SMS…' : 'Send text SMS' }}
+    </button>
+  } @else {
+    <label>
+      <span>Class</span>
+      <select [(ngModel)]="className" class="input">
+        <option value="" disabled>Select class</option>
+        @for (c of schoolRef.classes(); track c.id) {
+          <option [value]="c.name">{{ c.name }}</option>
+        }
+      </select>
+    </label>
+  }
+  @if (tab === 'due') {
+    @if (dueProfileHint) {
+      <p class="muted">{{ dueProfileHint }}</p>
+    }
+    <label>
+      <span>Academic year</span>
+      <input [(ngModel)]="dueAcademicYear" class="input" placeholder="2026-27" />
+    </label>
+    <label class="grow">
+      <span>Reminder template</span>
+      <textarea
+        [(ngModel)]="dueTemplate"
+        rows="3"
+        class="input"
+        placeholder="Placeholders: {student_name}, {admission_no}, {class_name}, {academic_year}, {due_amount}, {school_name}, {school_phone}, {sender_name}"
+      ></textarea>
+    </label>
+    <button type="button" class="btn primary" (click)="sendDueFees()" [disabled]="sending">
+      {{ sending ? 'Queueing reminders…' : 'Send due-fees reminders' }}
+    </button>
+  } @else if (tab === 'group' || tab === 'single') {
+    <label class="grow">
+      <span>Message</span>
+      <textarea
+        [(ngModel)]="message"
+        rows="3"
+        class="input"
+        placeholder="Short update for parents… Optional: {school_name}, {school_phone}, {sender_name}"
+      ></textarea>
+    </label>
+    <button type="button" class="btn primary" (click)="send()" [disabled]="sending">
+      @if (tab === 'group') {
+        {{ sending ? 'Sending to group…' : 'Send to class group' }}
+      } @else {
+        {{ sending ? 'Sending…' : 'Send single entry' }}
+      }
+    </button>
+  }
+  @if (info) {
+    <p class="muted">{{ info }}</p>
+  }
+  @if (error) {
+    <p class="err">{{ error }}</p>
+  }
+</div>
+
+<h2 class="subhead">Recent broadcasts</h2>
+
+@if (list$ | async; as rows) {
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Class</th>
+          <th>Admission</th>
+          <th>Parent #</th>
+          <th>Message</th>
+          <th>Status</th>
+          <th>Sent</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of rows; track r.id) {
+          <tr>
+            <td>{{ r.class_name }}</td>
+            <td>{{ r.admission_no || '—' }}</td>
+            <td>{{ r.parent_phone || '—' }}</td>
+            <td class="msg-cell">{{ r.message }}</td>
+            <td>{{ r.status }}</td>
+            <td>{{ r.sent_at | date: 'short' }}</td>
+            <td class="row-actions">
+              <button type="button" class="btn sm danger" (click)="remove(r)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="empty">No broadcasts yet.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

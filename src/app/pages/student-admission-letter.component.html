@@ -1,0 +1,212 @@
+<header class="page-head">
+  <h1>Admission Letter</h1>
+  <p class="lede">
+    Search a student, pick a card style, then <strong>download a PDF</strong> or print. The large preview is what gets saved.
+ </p>
+</header>
+
+<section class="al-shell">
+  <label class="al-field al-field--search">
+    <span class="al-label">Search student</span>
+    <input
+      type="search"
+      class="input"
+      [(ngModel)]="studentSearch"
+      (ngModelChange)="onSearchChange()"
+      placeholder="Name or admission number"
+      autocomplete="off"
+    />
+  </label>
+
+  <label class="al-field">
+    <span class="al-label">Select student</span>
+    <select class="input" [(ngModel)]="selectedStudentId">
+      @if (filteredStudents.length === 0) {
+        <option [ngValue]="null" disabled>No matches</option>
+      }
+      @for (s of filteredStudents; track s.id) {
+        <option [ngValue]="s.id">
+          {{ s.full_name }} — {{ s.admission_no }} ({{ studentClassLine(s) }})
+        </option>
+      }
+    </select>
+  </label>
+
+  @if (loading) {
+    <p class="muted">Loading students…</p>
+  }
+  @if (loadError) {
+    <p class="err">{{ loadError }}</p>
+    <button type="button" class="btn sm" (click)="loadStudents()">Retry</button>
+  }
+
+  @if (selectedStudent; as st) {
+    <div class="al-views">
+      <h2 class="al-views-heading">Card style</h2>
+      <p class="al-views-hint muted">Tap a miniature to switch the large card. Each is a different layout.</p>
+      <div class="al-template-pick" role="list">
+        @for (t of templateOptions; track t.id) {
+          <button
+            type="button"
+            class="al-tpl-pick"
+            [class.al-tpl-pick--active]="selectedTemplate === t.id"
+            (click)="selectTemplate(t.id)"
+            [attr.aria-pressed]="selectedTemplate === t.id"
+          >
+            <span class="al-tpl-pick-viz" [class]="'al-tpl-pick-viz--' + t.id" aria-hidden="true"></span>
+            <span class="al-tpl-pick-name">{{ t.name }}</span>
+            <span class="al-tpl-pick-desc">{{ t.description }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="al-stage">
+        <div #pdfRoot class="al-pdf-root">
+          @switch (selectedTemplate) {
+            @case ('modern') {
+              <article class="al-card-viz al-card-viz--modern">
+                <div class="al-exec-accent" aria-hidden="true"></div>
+                <header class="al-exec-head">
+                  <p class="al-exec-school">{{ instituteName || 'School' }}</p>
+                  <h3 class="al-exec-title">Admission record</h3>
+                  <p class="al-exec-meta">Issued on {{ letterDateDisplay() }}</p>
+                </header>
+                <div class="al-exec-body">
+                  <div class="al-exec-photoCol">
+                    @if (studentPhotoUrl(st); as photo) {
+                      <img class="al-exec-photo" [src]="photo" alt="" />
+                    } @else {
+                      <div class="al-exec-photo al-exec-photo--ph" aria-hidden="true">
+                        {{ confirmationInitials(st.full_name) }}
+                      </div>
+                    }
+                  </div>
+                  <div class="al-exec-main">
+                    <p class="al-exec-name">{{ st.full_name }}</p>
+                    <p class="al-exec-role">Admitted student</p>
+                    <dl class="al-exec-facts">
+                      <div class="al-exec-fact">
+                        <dt>Registration / ID</dt>
+                        <dd>{{ st.admission_no }}</dd>
+                      </div>
+                      <div class="al-exec-fact">
+                        <dt>Class &amp; section</dt>
+                        <dd>{{ studentClassLine(st) }}</dd>
+                      </div>
+                      <div class="al-exec-fact">
+                        <dt>Admission date</dt>
+                        <dd>{{ admissionDateDisplay(st) }}</dd>
+                      </div>
+                      <div class="al-exec-fact">
+                        <dt>Blood group</dt>
+                        <dd>{{ studentBloodGroup(st) }}</dd>
+                      </div>
+                      <div class="al-exec-fact">
+                        <dt>Father name</dt>
+                        <dd>{{ studentFatherName(st) }}</dd>
+                      </div>
+                      <div class="al-exec-fact">
+                        <dt>Emergency contact</dt>
+                        <dd>{{ studentEmergencyContact(st) }}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </div>
+                <footer class="al-exec-foot">
+                  <span>This document confirms enrolment for institutional records.</span>
+                </footer>
+              </article>
+            }
+            @case ('classic') {
+              <article class="al-card-viz al-card-viz--classic">
+                <div class="al-cl-head">
+                  <p class="al-cl-school">{{ instituteName || 'School' }}</p>
+                  <h3 class="al-cl-title">Admission letter</h3>
+                  <p class="al-cl-date">{{ letterDateDisplay() }}</p>
+                </div>
+                <p class="al-cl-sal">Dear Parent / Guardian,</p>
+                <p class="al-cl-body">
+                  This confirms that <strong>{{ st.full_name }}</strong> has been admitted to
+                  <strong>{{ studentClassLine(st) }}</strong> with registration number
+                  <strong>{{ st.admission_no }}</strong>, effective
+                  <strong>{{ admissionDateDisplay(st) }}</strong>.
+                </p>
+                <p class="al-cl-body">
+                  Please keep this letter for your records.
+                </p>
+                <p class="al-cl-body al-cl-extra">
+                  <strong>Blood group:</strong> {{ studentBloodGroup(st) }}.
+                  <strong>Father:</strong> {{ studentFatherName(st) }}.
+                  <strong>Emergency contact:</strong> {{ studentEmergencyContact(st) }}.
+                </p>
+                <p class="al-cl-sign">Yours faithfully,<br /><span class="al-cl-sign-line">School administration</span></p>
+              </article>
+            }
+            @case ('compact') {
+              <article class="al-card-viz al-card-viz--compact">
+                <header class="al-min-head">
+                  <p class="al-min-school">{{ instituteName || 'School' }}</p>
+                  <div class="al-min-rule" aria-hidden="true"></div>
+                  <p class="al-min-tag">Admission summary</p>
+                </header>
+                <div class="al-min-body">
+                  <p class="al-min-name">{{ st.full_name }}</p>
+                  <ul class="al-min-list">
+                    <li>
+                      <span class="al-min-lbl">Registration / ID</span>
+                      <span class="al-min-val">{{ st.admission_no }}</span>
+                    </li>
+                    <li>
+                      <span class="al-min-lbl">Class</span>
+                      <span class="al-min-val">{{ studentClassLine(st) }}</span>
+                    </li>
+                    <li>
+                      <span class="al-min-lbl">Admission date</span>
+                      <span class="al-min-val">{{ admissionDateDisplay(st) }}</span>
+                    </li>
+                    <li>
+                      <span class="al-min-lbl">Document date</span>
+                      <span class="al-min-val">{{ letterDateDisplay() }}</span>
+                    </li>
+                    <li>
+                      <span class="al-min-lbl">Blood group</span>
+                      <span class="al-min-val">{{ studentBloodGroup(st) }}</span>
+                    </li>
+                    <li>
+                      <span class="al-min-lbl">Father name</span>
+                      <span class="al-min-val">{{ studentFatherName(st) }}</span>
+                    </li>
+                    <li>
+                      <span class="al-min-lbl">Emergency contact</span>
+                      <span class="al-min-val">{{ studentEmergencyContact(st) }}</span>
+                    </li>
+                  </ul>
+                </div>
+                <footer class="al-min-foot">
+                  <span class="al-min-foot-text">Authorised school record · For official correspondence</span>
+                </footer>
+              </article>
+            }
+          }
+        </div>
+      </div>
+
+      @if (pdfError) {
+        <p class="err al-pdf-err">{{ pdfError }}</p>
+      }
+
+      <div class="al-actions">
+        <button
+          type="button"
+          class="btn primary"
+          (click)="downloadPdf()"
+          [disabled]="pdfExporting"
+        >
+          {{ pdfExporting ? 'Creating PDF…' : 'Download PDF' }}
+        </button>
+        <button type="button" class="btn" (click)="printSelectedLetter()">Print</button>
+        <a class="btn sm ghost" routerLink="/students/admission">New student</a>
+      </div>
+    </div>
+  }
+</section>

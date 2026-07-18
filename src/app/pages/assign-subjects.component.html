@@ -1,0 +1,81 @@
+<div class="as-fullpage">
+<header class="page-head as-head">
+  <div class="cl-grid-head" aria-label="Breadcrumb">
+    <span class="cl-grid-head-t">Subjects</span>
+    <span class="cl-grid-head-sep" aria-hidden="true">|</span>
+    <svg class="cl-ico-home" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z" />
+    </svg>
+    <span class="cl-grid-head-sub">Assign Subjects</span>
+  </div>
+  <h1>Assign Subjects</h1>
+  <p class="lede">
+    Choose a class, enter subject names and total exam marks, then assign. Rows with empty subject names are ignored;
+    saving replaces all subjects for that class.
+  </p>
+</header>
+
+<div class="cl-add-card as-add-card">
+  <h2 class="cl-add-title">Create Subjects</h2>
+  <div class="cl-legend" aria-hidden="true">
+    <span class="cl-legend-req"><span class="cl-dot cl-dot-req"></span> Required*</span>
+    <span class="cl-legend-opt"><span class="cl-dot cl-dot-opt"></span> Optional</span>
+  </div>
+
+  <div class="cl-fields">
+    <div class="cl-float cl-float-req">
+      <span class="cl-float-label">Select Class*</span>
+      <select
+        class="cl-float-input cl-float-select"
+        [(ngModel)]="selectedClassId"
+        (ngModelChange)="loadSubjectsForClass()"
+      >
+        <option [ngValue]="null">Select class</option>
+        @for (c of sortedClasses; track c.id) {
+          <option [ngValue]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+
+    @for (row of rows; track $index; let i = $index) {
+      <div class="sub-row-pair">
+        <label class="cl-float cl-float-req">
+          <span class="cl-float-label">Subject Name*</span>
+          <input
+            type="text"
+            class="cl-float-input"
+            [(ngModel)]="row.subjectName"
+            placeholder="Name Of Subject"
+            autocomplete="off"
+          />
+        </label>
+        <label class="cl-float cl-float-req">
+          <span class="cl-float-label">Marks*</span>
+          <input
+            type="text"
+            class="cl-float-input"
+            [(ngModel)]="row.totalMarks"
+            placeholder="Total Exam Marks"
+            autocomplete="off"
+          />
+        </label>
+      </div>
+    }
+
+    <div class="sub-add-remove">
+      <button type="button" class="sub-sml-btn" (click)="addRow()">+ Add More</button>
+      <button type="button" class="sub-sml-btn sub-sml-btn-dark" (click)="removeRow()">− Remove</button>
+    </div>
+  </div>
+
+  @if (err) {
+    <p class="cl-form-err">{{ err }}</p>
+  }
+
+  <div class="cl-card-actions">
+    <button type="button" class="cl-create-btn" [disabled]="busy" (click)="save()">
+      {{ busy ? 'Saving…' : '+ Assign Subjects' }}
+    </button>
+  </div>
+</div>
+</div>

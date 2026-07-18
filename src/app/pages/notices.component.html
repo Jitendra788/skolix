@@ -1,0 +1,68 @@
+<header class="page-head">
+  <h1>School notice board</h1>
+  <p class="lede">Create, edit, and remove announcements for parents, students, and staff.</p>
+</header>
+
+<section class="crud-panel">
+  <h2>{{ editingId != null ? 'Edit notice' : 'New notice' }}</h2>
+  <div class="form-grid">
+    <label>
+      <span>Title</span>
+      <input type="text" [(ngModel)]="title" class="input" />
+    </label>
+    <label>
+      <span>Audience</span>
+      <input
+        type="text"
+        [(ngModel)]="audience"
+        class="input"
+        placeholder="all, parents, staff…"
+      />
+    </label>
+    <label class="span-2">
+      <span>Body</span>
+      <textarea [(ngModel)]="body" class="input" rows="4"></textarea>
+    </label>
+    <label class="check-row">
+      <input type="checkbox" [(ngModel)]="pinned" />
+      <span>Pinned</span>
+    </label>
+  </div>
+  @if (error) {
+    <p class="err">{{ error }}</p>
+  }
+  <div class="form-actions">
+    <button type="button" class="btn primary sm" [disabled]="saving" (click)="save()">
+      {{ saving ? 'Saving…' : editingId != null ? 'Update' : 'Create' }}
+    </button>
+    @if (editingId != null) {
+      <button type="button" class="btn sm ghost" (click)="clearForm()">Cancel</button>
+    }
+  </div>
+</section>
+
+@if (notices$ | async; as list) {
+  <div class="cards">
+    @for (n of list; track n.id) {
+      <article class="card" [class.pinned]="n.pinned">
+        <div class="card-head">
+          <h2>{{ n.title }}</h2>
+          @if (n.pinned) {
+            <span class="badge">Pinned</span>
+          }
+        </div>
+        <p class="card-body">{{ n.body }}</p>
+        <footer class="card-foot">
+          <span>{{ n.audience }}</span>
+          <time>{{ n.created_at | date: 'medium' }}</time>
+        </footer>
+        <div class="card-actions">
+          <button type="button" class="btn sm" (click)="edit(n)">Edit</button>
+          <button type="button" class="btn sm danger" (click)="remove(n)">Delete</button>
+        </div>
+      </article>
+    } @empty {
+      <p class="muted">No notices.</p>
+    }
+  </div>
+}

@@ -1,0 +1,58 @@
+:host {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
+/* Bleed to main column edges (matches .esk-content padding). */
+.cf-fullpage {
+  --cf-pad-x: clamp(1.15rem, 3vw, 2.25rem);
+  margin: -1.5rem calc(-1 * var(--cf-pad-x)) -2.5rem;
+  padding: 1.35rem var(--cf-pad-x) 2rem;
+  min-height: calc(100dvh - var(--topbar-height, 60px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: var(--bg-root);
+}
+
+.cf-head h1 {
+  text-align: left;
+}
+
+.cf-head .lede {
+  max-width: none;
+  text-align: left;
+}
+
+.cf-add-card .cl-legend {
+  justify-content: flex-start;
+}
+
+.cf-add-card {
+  max-width: none;
+  width: 100%;
+  flex: 1 1 auto;
+  margin-bottom: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cf-add-card .cl-fields {
+  flex: 1 1 auto;
+}
+
+.cf-add-card .cl-card-actions {
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+
+.cf-add-card > h2.cl-add-title {
+  text-align: left;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
