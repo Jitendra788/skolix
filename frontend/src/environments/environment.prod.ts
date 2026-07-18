@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiOrigin: 'https://isolated-southern-establishment-trainers.trycloudflare.com',
+  apiOrigin: 'https://skolix-api.onrender.com',
 };

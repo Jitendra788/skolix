@@ -1,1 +1,1 @@
-window.__SKOLIX_API_ORIGIN__ = 'https://isolated-southern-establishment-trainers.trycloudflare.com';
+window.__SKOLIX_API_ORIGIN__ = 'https://skolix-api.onrender.com';
